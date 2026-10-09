@@ -1,0 +1,15 @@
+# Ambiente virtual do Python
+venv/
+.venv/
+
+# Cache do Python
+__pycache__/
+*.pyc
+
+# Variáveis de ambiente (senhas do banco, chave secreta do Flask)
+.env
+
+# Arquivos do sistema e do editor
+.DS_Store
+Thumbs.db
+.vscode/
