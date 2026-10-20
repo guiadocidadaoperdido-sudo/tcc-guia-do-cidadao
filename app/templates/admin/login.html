@@ -1,0 +1,16 @@
+{% extends "admin/base_admin.html" %}
+{% from "admin/_campo.html" import campo %}
+{% block titulo_admin %}Entrar{% endblock %}
+
+{% block conteudo_admin %}
+<div class="caixa-login">
+  <h1>Área administrativa</h1>
+  <p>Acesso restrito à equipe que cadastra os conteúdos.</p>
+  <form method="post" novalidate>
+    {{ form.hidden_tag() }}
+    {{ campo(form.email) }}
+    {{ campo(form.senha) }}
+    <button type="submit" class="botao botao--azul botao--largo">Entrar</button>
+  </form>
+</div>
+{% endblock %}

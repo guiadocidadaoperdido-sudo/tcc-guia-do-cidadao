@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block titulo %}{{ categoria.nome }} | Guia do Cidadão Perdido{% endblock %}
+
+{% block conteudo %}
+<div class="container secao">
+  <nav class="trilha" aria-label="Você está em">
+    <ol>
+      <li><a href="{{ url_for('publico.inicio') }}">Início</a></li>
+      <li aria-current="page">{{ categoria.nome }}</li>
+    </ol>
+  </nav>
+
+  <h1>{{ categoria.nome }}</h1>
+  {% if categoria.descricao %}<p class="subtitulo">{{ categoria.descricao }}</p>{% endif %}
+
+  {% if conteudos %}
+  <ul class="lista-conteudos">
+    {% for item in conteudos %}{% include "publico/_cartao.html" %}{% endfor %}
+  </ul>
+  {% else %}
+  <p class="vazio">Ainda não há conteúdos publicados neste tema. <a href="{{ url_for('publico.inicio') }}#temas">Veja outros temas</a>.</p>
+  {% endif %}
+</div>
+{% endblock %}

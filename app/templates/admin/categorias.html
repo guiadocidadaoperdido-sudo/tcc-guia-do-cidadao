@@ -1,0 +1,35 @@
+{% extends "admin/base_admin.html" %}
+{% block titulo_admin %}Categorias{% endblock %}
+
+{% block conteudo_admin %}
+<div class="cabecalho-pagina">
+  <h1>Categorias</h1>
+  <a class="botao botao--verde" href="{{ url_for('admin.categoria_form') }}">Nova categoria</a>
+</div>
+
+{% if categorias %}
+<div class="tabela-rolagem">
+<table class="tabela">
+  <thead><tr><th scope="col">Nome</th><th scope="col">Endereço</th><th scope="col">Conteúdos</th><th scope="col">Ações</th></tr></thead>
+  <tbody>
+    {% for cat in categorias %}
+    <tr>
+      <td>{{ cat.nome }}</td>
+      <td><code>/categoria/{{ cat.slug }}</code></td>
+      <td>{{ cat.conteudos | length }}</td>
+      <td class="tabela__acoes">
+        <a href="{{ url_for('admin.categoria_form', id=cat.id) }}">Editar</a>
+        <form method="post" action="{{ url_for('admin.categoria_excluir', id=cat.id) }}" data-confirmar="Excluir a categoria {{ cat.nome }}?">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="link-perigo">Excluir</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p>Nenhuma categoria cadastrada.</p>
+{% endif %}
+{% endblock %}

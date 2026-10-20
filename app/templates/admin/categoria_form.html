@@ -1,0 +1,15 @@
+{% extends "admin/base_admin.html" %}
+{% from "admin/_campo.html" import campo %}
+{% block titulo_admin %}{{ "Editar" if categoria.id else "Nova" }} categoria{% endblock %}
+
+{% block conteudo_admin %}
+<p><a href="{{ url_for('admin.categorias') }}">&larr; Voltar para categorias</a></p>
+<h1>{{ "Editar categoria" if categoria.id else "Nova categoria" }}</h1>
+<form method="post" class="formulario" novalidate>
+  {{ form.hidden_tag() }}
+  {{ campo(form.nome) }}
+  {{ campo(form.slug) }}
+  {{ campo(form.descricao, linhas=3) }}
+  <button type="submit" class="botao botao--verde">Salvar</button>
+</form>
+{% endblock %}

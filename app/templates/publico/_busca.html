@@ -1,0 +1,8 @@
+<form class="busca" action="{{ url_for('publico.busca') }}" method="get" role="search">
+  <label for="campo-busca" class="busca__rotulo">O que você precisa resolver?</label>
+  <div class="busca__linha">
+    <input id="campo-busca" name="q" type="search" value="{{ termo or '' }}" maxlength="100"
+           placeholder="Ex.: CNH, alistamento, documentos" autocomplete="off">
+    <button type="submit" class="botao botao--azul">Buscar</button>
+  </div>
+</form>

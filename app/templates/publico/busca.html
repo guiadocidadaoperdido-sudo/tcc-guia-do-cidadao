@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block titulo %}{% if termo %}Busca: {{ termo }}{% else %}Buscar{% endif %} | Guia do Cidadão Perdido{% endblock %}
+
+{% block conteudo %}
+<div class="container secao">
+  <h1>Buscar</h1>
+  {% include "publico/_busca.html" %}
+
+  {% if termo %}
+    {% if resultados %}
+      <p class="resultado-total" role="status">{{ resultados | length }} resultado(s) para <strong>"{{ termo }}"</strong>.</p>
+      <ul class="lista-conteudos">
+        {% for item in resultados %}{% include "publico/_cartao.html" %}{% endfor %}
+      </ul>
+    {% else %}
+      <div class="vazio" role="status">
+        <p>Não encontramos nada sobre <strong>"{{ termo }}"</strong>.</p>
+        <p>Tente usar outra palavra, como o nome do programa ou do documento. Ou escolha um dos temas abaixo:</p>
+        <ul class="sugestoes">
+          {% for cat in categorias %}
+          <li><a href="{{ url_for('publico.categoria', slug=cat.slug) }}">{{ cat.nome }}</a></li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+  {% endif %}
+</div>
+{% endblock %}

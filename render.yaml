@@ -1,0 +1,18 @@
+# Configuração do Render (Blueprint). No painel: New > Blueprint > escolher este repositório.
+services:
+  - type: web
+    name: guia-do-cidadao-perdido
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt && flask --app run criar-banco
+    startCommand: gunicorn run:app --workers 2 --bind 0.0.0.0:$PORT
+    healthCheckPath: /sobre
+    envVars:
+      - key: DATABASE_URL
+        sync: false          # o Render pede o valor na criação (endereço do Neon)
+      - key: SECRET_KEY
+        generateValue: true  # o Render gera uma chave aleatória
+      - key: COOKIE_SEGURO
+        value: "1"
+      - key: ATRAS_DE_PROXY
+        value: "1"

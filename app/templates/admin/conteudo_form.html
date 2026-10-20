@@ -1,0 +1,58 @@
+{% extends "admin/base_admin.html" %}
+{% from "admin/_campo.html" import campo %}
+{% block titulo_admin %}{{ "Editar" if conteudo.id else "Novo" }} conteúdo{% endblock %}
+
+{% block conteudo_admin %}
+<p><a href="{{ url_for('admin.conteudos') }}">&larr; Voltar para conteúdos</a></p>
+<h1>{{ "Editar conteúdo" if conteudo.id else "Novo conteúdo" }}</h1>
+
+<form method="post" class="formulario" novalidate>
+  {{ form.hidden_tag() }}
+
+  <fieldset>
+    <legend>Identificação</legend>
+    {{ campo(form.titulo) }}
+    {{ campo(form.slug) }}
+    {{ campo(form.categoria_id) }}
+    {{ campo(form.resumo, linhas=2) }}
+  </fieldset>
+
+  <fieldset>
+    <legend>Partes do conteúdo</legend>
+    {{ campo(form.o_que_e, linhas=6) }}
+    {{ campo(form.quem_tem_direito, linhas=4) }}
+    {{ campo(form.documentos, linhas=4) }}
+    {{ campo(form.como_solicitar, linhas=6) }}
+    {{ campo(form.alerta_golpes, linhas=3) }}
+  </fieldset>
+
+  <fieldset class="{% if erros_fontes %}campo--erro{% endif %}">
+    <legend>Fontes oficiais</legend>
+    <p class="campo__dica">Todo conteúdo precisa de pelo menos uma fonte oficial. Para remover uma fonte, clique em "Remover" ou apague os três campos dela.</p>
+    {% for erro in erros_fontes %}<p class="campo__msg-erro" role="alert">{{ erro }}</p>{% endfor %}
+    <div id="lista-fontes">
+      {% for fonte in fontes %}
+      <div class="fonte-linha">
+        <div class="campo">
+          <label class="campo__rotulo" for="fonte-orgao-{{ loop.index }}">Órgão</label>
+          <input id="fonte-orgao-{{ loop.index }}" name="fonte_orgao" value="{{ fonte.orgao }}" maxlength="120" placeholder="Ex.: Ministério das Cidades">
+        </div>
+        <div class="campo">
+          <label class="campo__rotulo" for="fonte-titulo-{{ loop.index }}">Título da página</label>
+          <input id="fonte-titulo-{{ loop.index }}" name="fonte_titulo" value="{{ fonte.titulo }}" maxlength="150">
+        </div>
+        <div class="campo">
+          <label class="campo__rotulo" for="fonte-url-{{ loop.index }}">Endereço (https://...)</label>
+          <input id="fonte-url-{{ loop.index }}" name="fonte_url" type="url" value="{{ fonte.url }}" maxlength="500">
+        </div>
+        <button type="button" class="link-perigo" data-remover-fonte>Remover</button>
+      </div>
+      {% endfor %}
+    </div>
+    <button type="button" class="botao botao--contorno" id="adicionar-fonte">+ Adicionar fonte</button>
+  </fieldset>
+
+  {{ campo(form.publicado) }}
+  <button type="submit" class="botao botao--verde">Salvar</button>
+</form>
+{% endblock %}

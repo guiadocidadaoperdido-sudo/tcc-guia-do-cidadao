@@ -1,0 +1,17 @@
+{# Desenha um campo do formulário com rótulo, dica e mensagens de erro. #}
+{% macro campo(field, linhas=None) %}
+<div class="campo{% if field.errors %} campo--erro{% endif %}">
+  {% if field.type == "BooleanField" %}
+    <label class="campo__check">{{ field() }} {{ field.label.text }}</label>
+  {% else %}
+    {{ field.label(class="campo__rotulo") }}
+    {% set dica_id = field.id ~ "-dica" %}
+    {% set attrs = {} %}
+    {% if field.description %}{% set _ = attrs.update({"aria-describedby": dica_id}) %}{% endif %}
+    {% if field.errors %}{% set _ = attrs.update({"aria-invalid": "true"}) %}{% endif %}
+    {% if linhas %}{{ field(rows=linhas, **attrs) }}{% else %}{{ field(**attrs) }}{% endif %}
+    {% if field.description %}<small id="{{ dica_id }}" class="campo__dica">{{ field.description }}</small>{% endif %}
+  {% endif %}
+  {% for erro in field.errors %}<p class="campo__msg-erro">{{ erro }}</p>{% endfor %}
+</div>
+{% endmacro %}

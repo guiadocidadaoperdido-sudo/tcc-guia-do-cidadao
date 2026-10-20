@@ -1,0 +1,43 @@
+{% extends "admin/base_admin.html" %}
+{% block titulo_admin %}Avaliações{% endblock %}
+
+{% block conteudo_admin %}
+<h1>Avaliações</h1>
+<p>Total de respostas à pergunta "Este conteúdo foi útil?".</p>
+
+{% if linhas %}
+<div class="tabela-rolagem">
+<table class="tabela">
+  <thead><tr><th scope="col">Conteúdo</th><th scope="col">Sim</th><th scope="col">Não</th><th scope="col">Total</th><th scope="col">% de "Sim"</th></tr></thead>
+  <tbody>
+    {% for conteudo, sim, nao in linhas %}
+    {% set total = sim + nao %}
+    <tr>
+      <td>{{ conteudo.titulo }}{% if not conteudo.publicado %} <span class="selo">Rascunho</span>{% endif %}</td>
+      <td>{{ sim }}</td>
+      <td>{{ nao }}</td>
+      <td>{{ total }}</td>
+      <td>{{ "%.0f%%" | format(sim * 100 / total) if total else "—" }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p>Nenhum conteúdo cadastrado.</p>
+{% endif %}
+
+<h2>Sugestões recentes</h2>
+{% if comentarios %}
+<ul class="comentarios">
+  {% for a in comentarios %}
+  <li>
+    <p>{{ a.comentario }}</p>
+    <small>{{ a.conteudo.titulo }} · {{ "Útil" if a.util else "Não útil" }} · {{ a.criado_em | data }}</small>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>Nenhuma sugestão recebida.</p>
+{% endif %}
+{% endblock %}

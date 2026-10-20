@@ -1,0 +1,37 @@
+{% extends "admin/base_admin.html" %}
+
+{% block conteudo_admin %}
+<h1>Painel</h1>
+<ul class="numeros">
+  <li><strong>{{ totais.categorias }}</strong> categorias</li>
+  <li><strong>{{ totais.conteudos }}</strong> conteúdos</li>
+  <li><strong>{{ totais.publicados }}</strong> publicados</li>
+  <li><strong>{{ totais.avaliacoes }}</strong> avaliações</li>
+</ul>
+
+<p class="acoes">
+  <a class="botao botao--verde" href="{{ url_for('admin.conteudo_form') }}">Novo conteúdo</a>
+  <a class="botao botao--contorno" href="{{ url_for('admin.categoria_form') }}">Nova categoria</a>
+</p>
+
+<h2>Últimas alterações</h2>
+{% if ultimos %}
+<div class="tabela-rolagem">
+<table class="tabela">
+  <thead><tr><th scope="col">Título</th><th scope="col">Situação</th><th scope="col">Atualizado em</th><th scope="col">Por</th></tr></thead>
+  <tbody>
+    {% for c in ultimos %}
+    <tr>
+      <td><a href="{{ url_for('admin.conteudo_form', id=c.id) }}">{{ c.titulo }}</a></td>
+      <td>{% if c.publicado %}<span class="selo selo--verde">Publicado</span>{% else %}<span class="selo">Rascunho</span>{% endif %}</td>
+      <td>{{ c.atualizado_em | data }}</td>
+      <td>{{ c.administrador.nome if c.administrador else "—" }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p>Nenhum conteúdo cadastrado ainda.</p>
+{% endif %}
+{% endblock %}

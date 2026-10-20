@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block classe_body %}admin{% endblock %}
+{% block titulo %}{% block titulo_admin %}Painel{% endblock %} | Administração{% endblock %}
+
+{% block menu %}
+{% if current_user.is_authenticated %}
+<nav aria-label="Menu da administração">
+  <ul class="menu">
+    <li><a href="{{ url_for('admin.painel') }}">Painel</a></li>
+    <li><a href="{{ url_for('admin.conteudos') }}">Conteúdos</a></li>
+    <li><a href="{{ url_for('admin.categorias') }}">Categorias</a></li>
+    <li><a href="{{ url_for('admin.avaliacoes') }}">Avaliações</a></li>
+    <li><a href="{{ url_for('publico.inicio') }}" target="_blank" rel="noopener">Ver site</a></li>
+    <li>
+      <form method="post" action="{{ url_for('admin.sair') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="menu__botao">Sair</button>
+      </form>
+    </li>
+  </ul>
+</nav>
+{% endif %}
+{% endblock %}
+
+{% block conteudo %}
+<div class="container secao">
+  {% block conteudo_admin %}{% endblock %}
+</div>
+{% endblock %}

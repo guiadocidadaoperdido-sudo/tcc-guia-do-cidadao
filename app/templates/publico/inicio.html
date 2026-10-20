@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block conteudo %}
+<section class="destaque">
+  <div class="container">
+    <h1>Direitos e serviços públicos explicados de um jeito simples</h1>
+    <p class="destaque__texto">Passo a passo, documentos necessários e o link para a página oficial. O guia informa, mas não substitui os órgãos públicos.</p>
+    {% include "publico/_busca.html" %}
+  </div>
+</section>
+
+<section id="temas" class="container secao" aria-labelledby="titulo-temas">
+  <h2 id="titulo-temas">Escolha um tema</h2>
+  {% if categorias %}
+  <ul class="grade-temas">
+    {% for cat in categorias %}
+    <li>
+      <a class="cartao-tema cartao-tema--{{ loop.index0 % 4 }}" href="{{ url_for('publico.categoria', slug=cat.slug) }}">
+        <span class="cartao-tema__nome">{{ cat.nome }}</span>
+        {% if cat.descricao %}<span class="cartao-tema__descricao">{{ cat.descricao }}</span>{% endif %}
+        <span class="cartao-tema__total">{{ cat.conteudos_publicados | length }} conteúdo(s)</span>
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>Ainda não há temas cadastrados.</p>
+  {% endif %}
+</section>
+
+<section class="container">
+  <div class="faixa-golpe" role="note">
+    <strong>Cuidado com golpes!</strong>
+    Serviços do governo não pedem senha, código por SMS ou pagamento por Pix em mensagens. Na dúvida, entre direto no site oficial, que termina em <strong>.gov.br</strong>.
+  </div>
+</section>
+
+{% if recentes %}
+<section class="container secao" aria-labelledby="titulo-recentes">
+  <h2 id="titulo-recentes">Atualizados recentemente</h2>
+  <ul class="lista-conteudos">
+    {% for item in recentes %}{% include "publico/_cartao.html" %}{% endfor %}
+  </ul>
+</section>
+{% endif %}
+{% endblock %}

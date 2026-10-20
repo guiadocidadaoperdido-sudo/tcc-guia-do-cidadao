@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="{% block descricao %}Direitos, deveres e serviços públicos explicados em linguagem simples, sempre com link para a fonte oficial.{% endblock %}">
+  <title>{% block titulo %}Guia do Cidadão Perdido{% endblock %}</title>
+  <link rel="icon" href="{{ url_for('static', filename='img/icone.svg') }}" type="image/svg+xml">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/estilo.css') }}">
+</head>
+<body class="{% block classe_body %}{% endblock %}">
+  <a class="pular" href="#principal">Pular para o conteúdo</a>
+
+  <header class="topo">
+    <div class="container topo__linha">
+      <a class="marca" href="{{ url_for('publico.inicio') }}">
+        <img src="{{ url_for('static', filename='img/icone.svg') }}" alt="" width="36" height="36">
+        <span>Guia do Cidadão <strong>Perdido</strong></span>
+      </a>
+      {% block menu %}
+      <nav aria-label="Menu principal">
+        <ul class="menu">
+          <li><a href="{{ url_for('publico.inicio') }}#temas">Temas</a></li>
+          <li><a href="{{ url_for('publico.busca') }}">Buscar</a></li>
+          <li><a href="{{ url_for('publico.sobre') }}">Sobre</a></li>
+        </ul>
+      </nav>
+      {% endblock %}
+    </div>
+  </header>
+
+  <main id="principal" tabindex="-1">
+    {% with mensagens = get_flashed_messages(with_categories=true) %}
+      {% if mensagens %}
+      <div class="container">
+        {% for categoria, mensagem in mensagens %}
+          <p class="mensagem mensagem--{{ categoria }}" role="{{ 'alert' if categoria == 'erro' else 'status' }}">{{ mensagem }}</p>
+        {% endfor %}
+      </div>
+      {% endif %}
+    {% endwith %}
+    {% block conteudo %}{% endblock %}
+  </main>
+
+  <footer class="rodape">
+    <div class="container">
+      <p><strong>Aviso:</strong> o Guia do Cidadão Perdido é informativo. Ele não executa nem substitui os serviços dos órgãos públicos. Confira sempre a fonte oficial.</p>
+      <p>Trabalho de Conclusão de Curso do Técnico em Desenvolvimento de Sistemas, Etec Profª Ilza Nascimento Pintus, São José dos Campos - SP, 2026.</p>
+    </div>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+</body>
+</html>

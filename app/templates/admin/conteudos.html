@@ -1,0 +1,42 @@
+{% extends "admin/base_admin.html" %}
+{% block titulo_admin %}Conteúdos{% endblock %}
+
+{% block conteudo_admin %}
+<div class="cabecalho-pagina">
+  <h1>Conteúdos</h1>
+  <a class="botao botao--verde" href="{{ url_for('admin.conteudo_form') }}">Novo conteúdo</a>
+</div>
+
+{% if conteudos %}
+<div class="tabela-rolagem">
+<table class="tabela">
+  <thead><tr><th scope="col">Título</th><th scope="col">Categoria</th><th scope="col">Situação</th><th scope="col">Fontes</th><th scope="col">Atualizado em</th><th scope="col">Ações</th></tr></thead>
+  <tbody>
+    {% for c in conteudos %}
+    <tr>
+      <td>{{ c.titulo }}</td>
+      <td>{{ c.categoria.nome }}</td>
+      <td>{% if c.publicado %}<span class="selo selo--verde">Publicado</span>{% else %}<span class="selo">Rascunho</span>{% endif %}</td>
+      <td>{{ c.fontes | length }}</td>
+      <td>{{ c.atualizado_em | data }}</td>
+      <td class="tabela__acoes">
+        <a href="{{ url_for('admin.conteudo_form', id=c.id) }}">Editar</a>
+        {% if c.publicado %}<a href="{{ url_for('publico.conteudo', slug=c.slug) }}" target="_blank" rel="noopener">Ver</a>{% endif %}
+        <form method="post" action="{{ url_for('admin.conteudo_publicar', id=c.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="link-botao">{{ "Despublicar" if c.publicado else "Publicar" }}</button>
+        </form>
+        <form method="post" action="{{ url_for('admin.conteudo_excluir', id=c.id) }}" data-confirmar="Excluir o conteúdo {{ c.titulo }}? Essa ação não pode ser desfeita.">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="link-perigo">Excluir</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p>Nenhum conteúdo cadastrado.</p>
+{% endif %}
+{% endblock %}

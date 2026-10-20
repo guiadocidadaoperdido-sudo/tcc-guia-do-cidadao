@@ -1,0 +1,8 @@
+<li class="cartao-conteudo">
+  <a href="{{ url_for('publico.conteudo', slug=item.slug) }}">
+    <span class="etiqueta">{{ item.categoria.nome }}</span>
+    <h3>{{ item.titulo }}</h3>
+    <p>{{ item.resumo }}</p>
+    <span class="cartao-conteudo__data">Atualizado em {{ item.atualizado_em | data }}</span>
+  </a>
+</li>
