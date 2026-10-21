@@ -3,7 +3,7 @@
 {% block descricao %}{{ conteudo.resumo }}{% endblock %}
 
 {% block conteudo %}
-<article class="container secao conteudo">
+<article class="pagina conteudo">
   <nav class="trilha" aria-label="Você está em">
     <ol>
       <li><a href="{{ url_for('publico.inicio') }}">Início</a></li>
@@ -12,9 +12,12 @@
     </ol>
   </nav>
 
-  <h1>{{ conteudo.titulo }}</h1>
-  <p class="subtitulo">{{ conteudo.resumo }}</p>
-  <p class="data-atualizacao">Atualizado em <time datetime="{{ conteudo.atualizado_em.strftime('%Y-%m-%d') }}">{{ conteudo.atualizado_em | data }}</time></p>
+  <header class="pagina__cabecalho">
+    <span class="category-label category--destaque">{{ conteudo.categoria.nome }}</span>
+    <h1 class="pagina__titulo">{{ conteudo.titulo }}</h1>
+    <p class="subtitulo">{{ conteudo.resumo }}</p>
+    <p class="data-atualizacao">Atualizado em <time datetime="{{ conteudo.atualizado_em.strftime('%Y-%m-%d') }}">{{ conteudo.atualizado_em | data }}</time></p>
+  </header>
 
   {# RF04: o conteúdo dividido em partes que abrem e fecham #}
   <div class="blocos">
@@ -68,7 +71,7 @@
     <ul>
       {% for fonte in conteudo.fontes %}
       <li>
-        <a href="{{ fonte.url }}" target="_blank" rel="noopener noreferrer">{{ fonte.titulo }}<span class="sr-only"> (abre em nova aba)</span></a>
+        <a class="link-oficial" href="{{ fonte.url }}" target="_blank" rel="noopener noreferrer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>{{ fonte.titulo }}<span class="sr-only"> (abre em nova aba)</span></a>
         <span class="fontes__orgao">{{ fonte.orgao }}</span>
       </li>
       {% endfor %}

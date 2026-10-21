@@ -2,7 +2,7 @@
 {% block titulo %}{{ categoria.nome }} | Guia do Cidadão Perdido{% endblock %}
 
 {% block conteudo %}
-<div class="container secao">
+<div class="pagina">
   <nav class="trilha" aria-label="Você está em">
     <ol>
       <li><a href="{{ url_for('publico.inicio') }}">Início</a></li>
@@ -10,8 +10,11 @@
     </ol>
   </nav>
 
-  <h1>{{ categoria.nome }}</h1>
-  {% if categoria.descricao %}<p class="subtitulo">{{ categoria.descricao }}</p>{% endif %}
+  <header class="pagina__cabecalho">
+    <span class="category-label category--destaque">Tema</span>
+    <h1 class="pagina__titulo">{{ categoria.nome }}</h1>
+    {% if categoria.descricao %}<p class="subtitulo">{{ categoria.descricao }}</p>{% endif %}
+  </header>
 
   {% if conteudos %}
   <ul class="lista-conteudos">

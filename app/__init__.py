@@ -61,9 +61,12 @@ def _registrar_cabecalhos(app):
         resposta.headers.setdefault("X-Content-Type-Options", "nosniff")
         resposta.headers.setdefault("X-Frame-Options", "DENY")
         resposta.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+        # As fontes do visual vêm do Google Fonts; o resto só do próprio site.
         resposta.headers.setdefault(
             "Content-Security-Policy",
-            "default-src 'self'; img-src 'self' data:; style-src 'self'; "
+            "default-src 'self'; img-src 'self' data:; "
+            "style-src 'self' https://fonts.googleapis.com; "
+            "font-src 'self' https://fonts.gstatic.com; "
             "script-src 'self'; frame-ancestors 'none'; form-action 'self'",
         )
         if app.config.get("SESSION_COOKIE_SECURE"):

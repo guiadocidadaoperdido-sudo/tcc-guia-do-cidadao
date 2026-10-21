@@ -2,8 +2,10 @@
 {% block titulo %}{% if termo %}Busca: {{ termo }}{% else %}Buscar{% endif %} | Guia do Cidadão Perdido{% endblock %}
 
 {% block conteudo %}
-<div class="container secao">
-  <h1>Buscar</h1>
+<div class="pagina">
+  <header class="pagina__cabecalho">
+    <h1 class="pagina__titulo">Buscar no guia</h1>
+  </header>
   {% include "publico/_busca.html" %}
 
   {% if termo %}

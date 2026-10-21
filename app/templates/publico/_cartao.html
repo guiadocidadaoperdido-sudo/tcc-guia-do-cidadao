@@ -1,8 +1,10 @@
-<li class="cartao-conteudo">
-  <a href="{{ url_for('publico.conteudo', slug=item.slug) }}">
-    <span class="etiqueta">{{ item.categoria.nome }}</span>
-    <h3>{{ item.titulo }}</h3>
-    <p>{{ item.resumo }}</p>
-    <span class="cartao-conteudo__data">Atualizado em {{ item.atualizado_em | data }}</span>
+<li class="service-card cartao-conteudo">
+  <a class="service-card__link" href="{{ url_for('publico.conteudo', slug=item.slug) }}">
+    <div class="service-card__body">
+      <span class="category-label category--destaque">{{ item.categoria.nome }}</span>
+      <h3 class="service-card__headline">{{ item.titulo }}</h3>
+      <p class="service-card__excerpt">{{ item.resumo }}</p>
+      <span class="cartao-conteudo__data">Atualizado em {{ item.atualizado_em | data }}</span>
+    </div>
   </a>
 </li>

@@ -4,8 +4,8 @@
 
 {% block menu %}
 {% if current_user.is_authenticated %}
-<nav aria-label="Menu da administração">
-  <ul class="menu">
+<nav class="main-nav" id="main-nav" aria-label="Menu da administração">
+  <ul>
     <li><a href="{{ url_for('admin.painel') }}">Painel</a></li>
     <li><a href="{{ url_for('admin.conteudos') }}">Conteúdos</a></li>
     <li><a href="{{ url_for('admin.categorias') }}">Categorias</a></li>
@@ -23,7 +23,7 @@
 {% endblock %}
 
 {% block conteudo %}
-<div class="container secao">
+<div class="pagina">
   {% block conteudo_admin %}{% endblock %}
 </div>
 {% endblock %}

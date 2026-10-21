@@ -1,24 +1,53 @@
 {% extends "base.html" %}
 
+{# Imagem de cada tema inicial. Temas novos aparecem sem imagem. #}
+{% set imagens = {
+  "assistencia-social": ("bolsa.jpg", "Família recebendo benefício social"),
+  "moradia": ("casa.jpg", "Conjunto habitacional"),
+  "servico-militar": ("militar.jpg", "Jovens em cerimônia de alistamento militar"),
+  "transito-e-habilitacao": ("cnh.jpg", "Carteira Nacional de Habilitação"),
+} %}
+
 {% block conteudo %}
-<section class="destaque">
-  <div class="container">
-    <h1>Direitos e serviços públicos explicados de um jeito simples</h1>
-    <p class="destaque__texto">Passo a passo, documentos necessários e o link para a página oficial. O guia informa, mas não substitui os órgãos públicos.</p>
-    {% include "publico/_busca.html" %}
+<section class="hero-section fade-in-up">
+  <div class="hero-article">
+    <div class="hero-article__image">
+      <img src="{{ url_for('static', filename='img/hero.jpg') }}" alt="Congresso Nacional, em Brasília" width="1376" height="768">
+    </div>
+    <div class="hero-article__content">
+      <span class="category-label category--destaque">Cidadania</span>
+      <h1 class="hero-article__headline">Direitos e serviços públicos explicados de um jeito simples</h1>
+      <p class="hero-article__excerpt">Passo a passo, documentos necessários e o link para a página oficial. O guia informa, mas não substitui os órgãos públicos.</p>
+      {% include "publico/_busca.html" %}
+      <div class="hero-article__byline">
+        <span>Por <strong>Sidney Campos</strong> e <strong>Vitor Gabriel</strong></span>
+        <span class="byline__separator" aria-hidden="true">·</span>
+        <span>Etec Profª Ilza Nascimento Pintus</span>
+      </div>
+    </div>
   </div>
 </section>
 
-<section id="temas" class="container secao" aria-labelledby="titulo-temas">
-  <h2 id="titulo-temas">Escolha um tema</h2>
+<section id="temas" class="section-block fade-in-up" aria-labelledby="titulo-temas">
+  <div class="section-header"><h2 id="titulo-temas">Escolha um tema</h2></div>
   {% if categorias %}
-  <ul class="grade-temas">
+  <ul class="services-grid">
     {% for cat in categorias %}
-    <li>
-      <a class="cartao-tema cartao-tema--{{ loop.index0 % 4 }}" href="{{ url_for('publico.categoria', slug=cat.slug) }}">
-        <span class="cartao-tema__nome">{{ cat.nome }}</span>
-        {% if cat.descricao %}<span class="cartao-tema__descricao">{{ cat.descricao }}</span>{% endif %}
-        <span class="cartao-tema__total">{{ cat.conteudos_publicados | length }} conteúdo(s)</span>
+    {% set imagem = imagens.get(cat.slug) %}
+    <li class="service-card fade-in-up">
+      <a class="service-card__link" href="{{ url_for('publico.categoria', slug=cat.slug) }}">
+        {% if imagem %}
+        <div class="service-card__image">
+          <img src="{{ url_for('static', filename='img/' ~ imagem[0]) }}" alt="{{ imagem[1] }}" width="900" height="604" loading="lazy">
+          <div class="service-card__image-overlay"></div>
+        </div>
+        {% endif %}
+        <div class="service-card__body">
+          <span class="category-label category--{{ loop.index0 % 4 }}">{{ cat.conteudos_publicados | length }} conteúdo(s)</span>
+          <h3 class="service-card__headline">{{ cat.nome }}</h3>
+          {% if cat.descricao %}<p class="service-card__excerpt">{{ cat.descricao }}</p>{% endif %}
+          <span class="service-card__cta">Saber mais →</span>
+        </div>
       </a>
     </li>
     {% endfor %}
@@ -28,19 +57,38 @@
   {% endif %}
 </section>
 
-<section class="container">
-  <div class="faixa-golpe" role="note">
-    <strong>Cuidado com golpes!</strong>
-    Serviços do governo não pedem senha, código por SMS ou pagamento por Pix em mensagens. Na dúvida, entre direto no site oficial, que termina em <strong>.gov.br</strong>.
-  </div>
-</section>
+<div class="faixa-golpe fade-in-up" role="note">
+  <strong>Cuidado com golpes!</strong>
+  Serviços do governo não pedem senha, código por SMS ou pagamento por Pix em mensagens. Na dúvida, entre direto no site oficial, que termina em <strong>.gov.br</strong>.
+</div>
 
 {% if recentes %}
-<section class="container secao" aria-labelledby="titulo-recentes">
-  <h2 id="titulo-recentes">Atualizados recentemente</h2>
+<section class="section-block fade-in-up" aria-labelledby="titulo-recentes">
+  <div class="section-header"><h2 id="titulo-recentes">Atualizados recentemente</h2></div>
   <ul class="lista-conteudos">
     {% for item in recentes %}{% include "publico/_cartao.html" %}{% endfor %}
   </ul>
 </section>
 {% endif %}
+
+<section id="como-funciona" class="how-it-works fade-in-up" aria-labelledby="titulo-como-funciona">
+  <div class="section-header"><h2 id="titulo-como-funciona">Como funciona</h2></div>
+  <ol class="steps-grid">
+    <li class="step">
+      <span class="step__number" aria-hidden="true">1</span>
+      <h3 class="step__title">Escolha o assunto</h3>
+      <p class="step__desc">Navegue pelos temas acima ou use a busca para encontrar o serviço que você precisa.</p>
+    </li>
+    <li class="step">
+      <span class="step__number" aria-hidden="true">2</span>
+      <h3 class="step__title">Entenda os requisitos</h3>
+      <p class="step__desc">Cada conteúdo explica o que é, quem tem direito, quais documentos levar e o passo a passo.</p>
+    </li>
+    <li class="step">
+      <span class="step__number" aria-hidden="true">3</span>
+      <h3 class="step__title">Acesse a fonte oficial</h3>
+      <p class="step__desc">Todo conteúdo tem o link da página oficial do órgão responsável, onde o pedido é feito.</p>
+    </li>
+  </ol>
+</section>
 {% endblock %}

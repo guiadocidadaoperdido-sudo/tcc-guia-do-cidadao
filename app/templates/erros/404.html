@@ -2,10 +2,10 @@
 {% block titulo %}Página não encontrada | Guia do Cidadão Perdido{% endblock %}
 
 {% block conteudo %}
-<div class="container secao erro">
+<div class="pagina erro">
   <h1>Página não encontrada</h1>
   <p>O endereço pode estar errado ou o conteúdo foi retirado do site.</p>
-  <p><a class="botao botao--azul" href="{{ url_for('publico.inicio') }}">Voltar para o início</a></p>
+  <p><a class="botao botao--verde" href="{{ url_for('publico.inicio') }}">Voltar para o início</a></p>
   {% include "publico/_busca.html" %}
 </div>
 {% endblock %}

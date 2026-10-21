@@ -6,49 +6,113 @@
   <meta name="description" content="{% block descricao %}Direitos, deveres e serviços públicos explicados em linguagem simples, sempre com link para a fonte oficial.{% endblock %}">
   <title>{% block titulo %}Guia do Cidadão Perdido{% endblock %}</title>
   <link rel="icon" href="{{ url_for('static', filename='img/icone.svg') }}" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,700;1,900&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=Inter:wght@400;500;600;700;800&display=swap">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/estilo.css') }}">
+  {# Carregado no topo (sem defer) para marcar a página com a classe "js" antes de desenhar. #}
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </head>
 <body class="{% block classe_body %}{% endblock %}">
   <a class="pular" href="#principal">Pular para o conteúdo</a>
 
-  <header class="topo">
-    <div class="container topo__linha">
-      <a class="marca" href="{{ url_for('publico.inicio') }}">
-        <img src="{{ url_for('static', filename='img/icone.svg') }}" alt="" width="36" height="36">
-        <span>Guia do Cidadão <strong>Perdido</strong></span>
-      </a>
-      {% block menu %}
-      <nav aria-label="Menu principal">
-        <ul class="menu">
-          <li><a href="{{ url_for('publico.inicio') }}#temas">Temas</a></li>
-          <li><a href="{{ url_for('publico.busca') }}">Buscar</a></li>
-          <li><a href="{{ url_for('publico.sobre') }}">Sobre</a></li>
-        </ul>
-      </nav>
-      {% endblock %}
+  <header class="site-header" id="site-header">
+    <div class="header-top">
+      <div class="header-top__left">
+        <button type="button" class="menu-toggle" id="menu-toggle" aria-label="Abrir menu" aria-expanded="false" aria-controls="main-nav">
+          <span></span><span></span><span></span>
+        </button>
+        <span class="header-date" id="data-atual"></span>
+      </div>
+      <div class="header-top__center">
+        <a href="{{ url_for('publico.inicio') }}" class="site-logo">
+          <span class="site-logo__nome">Guia do Cidadão</span> <span class="logo-accent">Perdido</span>
+        </a>
+        <p class="site-tagline">Seus direitos, de forma simples</p>
+      </div>
+      <div class="header-top__right">
+        <a class="icon-btn" id="search-btn" href="{{ url_for('publico.busca') }}" aria-label="Buscar">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><path d="M21 21l-4.35-4.35"></path></svg>
+        </a>
+        <button type="button" class="icon-btn" id="contrast-toggle" aria-label="Alto contraste" aria-pressed="false">
+          <span class="mode-icon" aria-hidden="true">◐</span>
+        </button>
+      </div>
     </div>
+    {% block menu %}
+    <nav class="main-nav" id="main-nav" aria-label="Menu principal">
+      <ul>
+        <li><a href="{{ url_for('publico.inicio') }}">Início</a></li>
+        <li><a href="{{ url_for('publico.inicio') }}#temas">Temas</a></li>
+        <li><a href="{{ url_for('publico.inicio') }}#como-funciona">Como funciona</a></li>
+        <li><a href="{{ url_for('publico.busca') }}">Buscar</a></li>
+        <li><a href="{{ url_for('publico.sobre') }}">Sobre</a></li>
+      </ul>
+    </nav>
+    {% endblock %}
   </header>
 
-  <main id="principal" tabindex="-1">
+  <div class="search-modal" id="search-modal" hidden>
+    <div class="search-modal__overlay"></div>
+    <div class="search-modal__content" role="dialog" aria-modal="true" aria-labelledby="search-modal-titulo">
+      <button type="button" class="search-modal__close" id="search-close" aria-label="Fechar busca">✕</button>
+      <h2 id="search-modal-titulo">Buscar no Guia</h2>
+      <form action="{{ url_for('publico.busca') }}" method="get" role="search" class="search-modal__input-wrap">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><path d="M21 21l-4.35-4.35"></path></svg>
+        <label for="search-input" class="sr-only">O que você procura?</label>
+        <input type="search" id="search-input" name="q" maxlength="100" placeholder="O que você procura? (Ex.: Bolsa Família, CNH)" autocomplete="off">
+      </form>
+      <p class="search-modal__hint">Digite e aperte Enter para buscar serviços, direitos e documentos.</p>
+    </div>
+  </div>
+
+  <main id="principal" class="site-main" tabindex="-1">
     {% with mensagens = get_flashed_messages(with_categories=true) %}
       {% if mensagens %}
-      <div class="container">
         {% for categoria, mensagem in mensagens %}
           <p class="mensagem mensagem--{{ categoria }}" role="{{ 'alert' if categoria == 'erro' else 'status' }}">{{ mensagem }}</p>
         {% endfor %}
-      </div>
       {% endif %}
     {% endwith %}
     {% block conteudo %}{% endblock %}
   </main>
 
-  <footer class="rodape">
-    <div class="container">
-      <p><strong>Aviso:</strong> o Guia do Cidadão Perdido é informativo. Ele não executa nem substitui os serviços dos órgãos públicos. Confira sempre a fonte oficial.</p>
-      <p>Trabalho de Conclusão de Curso do Técnico em Desenvolvimento de Sistemas, Etec Profª Ilza Nascimento Pintus, São José dos Campos - SP, 2026.</p>
+  <footer class="site-footer">
+    <div class="footer__top">
+      <div class="footer__brand">
+        <p class="footer__logo">Guia do Cidadão <span>Perdido</span></p>
+        <p><strong>Aviso:</strong> o guia é informativo. Ele não executa nem substitui os serviços dos órgãos públicos. Confira sempre a fonte oficial.</p>
+        <p class="footer__school">Etec Profª Ilza Nascimento Pintus — 2026</p>
+      </div>
+      <div class="footer__links">
+        <div class="footer__col">
+          <h2>Navegação</h2>
+          <ul>
+            <li><a href="{{ url_for('publico.inicio') }}">Início</a></li>
+            <li><a href="{{ url_for('publico.inicio') }}#temas">Temas</a></li>
+            <li><a href="{{ url_for('publico.busca') }}">Buscar</a></li>
+            <li><a href="{{ url_for('publico.sobre') }}">Sobre</a></li>
+          </ul>
+        </div>
+        <div class="footer__col">
+          <h2>Fontes oficiais</h2>
+          <ul>
+            <li><a href="https://www.gov.br" target="_blank" rel="noopener noreferrer">Portal gov.br</a></li>
+            <li><a href="https://www.gov.br/mds" target="_blank" rel="noopener noreferrer">Ministério do Desenvolvimento Social</a></li>
+            <li><a href="https://www.gov.br/cidades" target="_blank" rel="noopener noreferrer">Ministério das Cidades</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <p>Trabalho de Conclusão de Curso do Técnico em Desenvolvimento de Sistemas, São José dos Campos - SP, 2026.</p>
+      <p>Desenvolvido por Sidney Campos e Vitor Gabriel.</p>
     </div>
   </footer>
 
-  <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+  <button type="button" class="back-to-top" id="back-to-top" aria-label="Voltar ao topo">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="18 15 12 9 6 15"></polyline></svg>
+  </button>
+
 </body>
 </html>
