@@ -1,7 +1,11 @@
 """Blueprint da parte pública: o visitante não precisa fazer login."""
-from flask import Blueprint, abort, flash, jsonify, redirect, render_template, request, session, url_for
+from flask import (
+    Blueprint, abort, current_app, flash, jsonify, redirect, render_template, request,
+    send_from_directory, session, url_for,
+)
+from sqlalchemy import text
 
-from ..extensions import db
+from ..extensions import db, limiter
 from ..models import Avaliacao, Categoria, Conteudo
 
 bp = Blueprint("publico", __name__)
@@ -48,10 +52,31 @@ def conteudo(slug):
     # RF04, RF05 e RF06. Conteúdo não publicado dá erro 404 (CT05).
     item = Conteudo.query.filter_by(slug=slug, publicado=True).first_or_404()
     ja_avaliou = item.id in session.get("avaliados", [])
-    return render_template("publico/conteudo.html", conteudo=item, ja_avaliou=ja_avaliou)
+    return render_template(
+        "publico/conteudo.html", conteudo=item, ja_avaliou=ja_avaliou,
+        relacionados=_relacionados(item),
+    )
+
+
+def _relacionados(item, limite=3):
+    """Outros conteúdos do mesmo tema; se faltar, completa com os mais recentes."""
+    publicados = Conteudo.query.filter(Conteudo.publicado.is_(True), Conteudo.id != item.id)
+    lista = (
+        publicados.filter(Conteudo.categoria_id == item.categoria_id)
+        .order_by(Conteudo.titulo).limit(limite).all()
+    )
+    if len(lista) < limite:
+        if lista:
+            publicados = publicados.filter(Conteudo.id.notin_([c.id for c in lista]))
+        lista += (
+            publicados.order_by(Conteudo.atualizado_em.desc())
+            .limit(limite - len(lista)).all()
+        )
+    return lista
 
 
 @bp.route("/conteudo/<slug>/avaliar", methods=["POST"])
+@limiter.limit(lambda: current_app.config["LIMITE_AVALIACAO"])
 def avaliar(slug):
     # RF07: o visitante diz se o conteúdo foi útil, sem cadastro
     item = Conteudo.query.filter_by(slug=slug, publicado=True).first_or_404()
@@ -78,3 +103,29 @@ def avaliar(slug):
 @bp.route("/sobre")
 def sobre():
     return render_template("publico/sobre.html")
+
+
+@bp.route("/offline")
+def offline():
+    # Página mostrada pelo aplicativo (PWA) quando o celular está sem internet.
+    return render_template("publico/offline.html")
+
+
+@bp.route("/sw.js")
+def service_worker():
+    # O service worker precisa ser servido na raiz para valer para o site todo.
+    resposta = send_from_directory(current_app.static_folder, "js/sw.js")
+    resposta.headers["Cache-Control"] = "no-cache"
+    resposta.headers["Content-Type"] = "text/javascript; charset=utf-8"
+    return resposta
+
+
+@bp.route("/saude")
+def saude():
+    """Verificação de saúde usada pelo Render: o site e o banco respondem?"""
+    try:
+        db.session.execute(text("SELECT 1"))
+        return jsonify(status="ok", banco="ok")
+    except Exception:  # noqa: BLE001
+        current_app.logger.exception("Falha ao acessar o banco na verificação de saúde")
+        return jsonify(status="erro", banco="indisponível"), 503

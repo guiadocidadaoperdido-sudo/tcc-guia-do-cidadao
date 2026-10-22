@@ -1,0 +1,10 @@
+Migrações do banco (Flask-Migrate / Alembic).
+
+Aplicar as migrações pendentes:   flask --app run db upgrade
+Criar uma migração após mudar um model:
+    flask --app run db migrate -m "descreva a mudança"
+    (confira o arquivo gerado em versions/ antes de aplicar)
+Voltar uma migração:              flask --app run db downgrade
+
+O comando "flask --app run criar-banco" faz o upgrade e também reconhece
+bancos criados antes das migrações existirem.

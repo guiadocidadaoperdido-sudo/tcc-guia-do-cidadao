@@ -10,13 +10,25 @@ from .models import Administrador, Categoria, Conteudo, FonteOficial
 def registrar_comandos(app):
     @app.cli.command("criar-banco")
     def criar_banco():
-        """Cria as cinco tabelas e o índice da busca, se ainda não existirem."""
-        db.create_all()
-        click.echo(f"Tabelas criadas em: {db.engine.url.render_as_string(hide_password=True)}")
+        """Cria ou atualiza as tabelas aplicando as migrações (Flask-Migrate).
+
+        Bancos criados antes das migrações (com db.create_all) já têm as cinco
+        tabelas: nesse caso o banco é só marcado como estando na primeira
+        migração, e as seguintes são aplicadas normalmente.
+        """
+        from flask_migrate import stamp, upgrade
+        from sqlalchemy import inspect
+
+        tabelas = set(inspect(db.engine).get_table_names())
+        if "conteudo" in tabelas and "alembic_version" not in tabelas:
+            stamp(revision="0001")
+            click.echo("Banco antigo reconhecido e marcado na migração 0001.")
+        upgrade()
+        click.echo(f"Banco atualizado em: {db.engine.url.render_as_string(hide_password=True)}")
 
     @app.cli.command("dados-iniciais")
     def dados_iniciais():
-        """Cadastra as categorias e os conteúdos iniciais (Bolsa Família, MCMV, alistamento e CNH)."""
+        """Cadastra as categorias e os conteúdos iniciais (só os que ainda não existem)."""
         from .dados_iniciais import CATEGORIAS, CONTEUDOS
 
         categorias = {}

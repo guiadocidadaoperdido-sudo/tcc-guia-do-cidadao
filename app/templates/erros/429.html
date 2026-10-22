@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block titulo %}Muitas tentativas | Guia do Cidadão Perdido{% endblock %}
+
+{% block conteudo %}
+<div class="pagina erro">
+  <h1>Muitas tentativas seguidas</h1>
+  <p>Por segurança, aguarde alguns minutos antes de tentar de novo.</p>
+  <p><a class="botao botao--verde" href="{{ url_for('publico.inicio') }}">Voltar para o início</a></p>
+</div>
+{% endblock %}

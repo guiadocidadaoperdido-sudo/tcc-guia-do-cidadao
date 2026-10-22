@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block titulo %}Sem internet | Guia do Cidadão Perdido{% endblock %}
+
+{% block conteudo %}
+<div class="pagina erro">
+  <h1>Você está sem internet</h1>
+  <p>Esta página ainda não foi guardada no aparelho. As páginas que você já abriu antes continuam disponíveis sem internet.</p>
+  <p><a class="botao botao--verde" href="{{ url_for('publico.inicio') }}">Voltar para o início</a></p>
+</div>
+{% endblock %}

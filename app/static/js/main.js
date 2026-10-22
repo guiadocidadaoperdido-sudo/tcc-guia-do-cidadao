@@ -1,45 +1,71 @@
 // Comportamentos da interface. O site funciona sem JavaScript; este arquivo
-// só deixa algumas ações mais práticas. O visual (alto contraste, menu,
-// busca em tela cheia, animações) segue o protótipo da pasta gcddp.
+// só deixa algumas ações mais práticas. As preferências (contraste, tamanho
+// da letra, checklist) ficam guardadas só no navegador do visitante (RNF10).
 
-// Avisa o CSS que o JavaScript está ativo (o menu do celular e as animações
-// dependem disso). Roda antes de a página ser desenhada.
-document.documentElement.classList.add("js");
+// Lê e grava no armazenamento do navegador sem quebrar se ele estiver bloqueado.
+const preferencias = {
+  ler(chave) {
+    try { return localStorage.getItem(chave); } catch (erro) { return null; }
+  },
+  gravar(chave, valor) {
+    try { localStorage.setItem(chave, valor); } catch (erro) { /* segue sem lembrar */ }
+  },
+};
+
+// Roda antes de a página ser desenhada: avisa o CSS que o JavaScript está
+// ativo e aplica o contraste e o tamanho da letra escolhidos antes.
+(function aplicarPreferencias() {
+  const raiz = document.documentElement;
+  raiz.classList.add("js");
+  if (preferencias.ler("altoContraste") === "ativo") raiz.classList.add("alto-contraste");
+  const nivel = Number(preferencias.ler("tamanhoLetra") || 0);
+  if (nivel) raiz.dataset.letra = String(nivel);
+})();
 
 document.addEventListener("DOMContentLoaded", () => {
-  ativarAltoContraste();
+  ativarAcessibilidade();
   ativarTopo();
   ativarMenuCelular();
   ativarBuscaTelaCheia();
   ativarAnimacoes();
   ativarVoltarAoTopo();
   mostrarData();
+  ativarChecklist();
+  ativarFerramentasConteudo();
   ativarAvaliacao();
   ativarConfirmacoes();
   ativarFontes();
+  registrarServiceWorker();
 });
 
-// Alto contraste. A escolha fica guardada só no navegador do visitante.
-function ativarAltoContraste() {
-  const botao = document.getElementById("contrast-toggle");
-  if (!botao) return;
+// Barra de acessibilidade: tamanho da letra (4 níveis) e alto contraste.
+function ativarAcessibilidade() {
+  const controles = document.getElementById("controles-acessibilidade");
+  if (!controles) return;
+  controles.hidden = false;
+  const raiz = document.documentElement;
 
-  const aplicar = (ativo) => {
-    document.body.classList.toggle("alto-contraste", ativo);
-    botao.setAttribute("aria-pressed", String(ativo));
-    botao.querySelector(".mode-icon").textContent = ativo ? "◑" : "◐";
+  controles.querySelectorAll("[data-fonte]").forEach((botao) => {
+    botao.addEventListener("click", () => {
+      const atual = Number(raiz.dataset.letra || 0);
+      const passo = Number(botao.dataset.fonte);
+      const novo = passo === 0 ? 0 : Math.max(-1, Math.min(2, atual + passo));
+      if (novo) raiz.dataset.letra = String(novo); else delete raiz.dataset.letra;
+      preferencias.gravar("tamanhoLetra", String(novo));
+    });
+  });
+
+  const contraste = document.getElementById("contrast-toggle");
+  const marcar = () => {
+    const ativo = raiz.classList.contains("alto-contraste");
+    contraste.setAttribute("aria-pressed", String(ativo));
+    contraste.querySelector(".mode-icon").textContent = ativo ? "◑" : "◐";
   };
-
-  try {
-    aplicar(localStorage.getItem("altoContraste") === "ativo");
-  } catch (erro) { /* navegador sem armazenamento: segue sem lembrar */ }
-
-  botao.addEventListener("click", () => {
-    const ativo = !document.body.classList.contains("alto-contraste");
-    aplicar(ativo);
-    try {
-      localStorage.setItem("altoContraste", ativo ? "ativo" : "inativo");
-    } catch (erro) { /* idem */ }
+  marcar();
+  contraste.addEventListener("click", () => {
+    const ativo = raiz.classList.toggle("alto-contraste");
+    preferencias.gravar("altoContraste", ativo ? "ativo" : "inativo");
+    marcar();
   });
 }
 
@@ -53,7 +79,7 @@ function ativarTopo() {
     const atual = window.scrollY;
     const menuAberto = document.querySelector(".main-nav.menu-open");
     topo.classList.toggle("scrolled", atual > 80);
-    topo.classList.toggle("header-hidden", !menuAberto && atual > ultimo && atual > 200);
+    topo.classList.toggle("header-hidden", !menuAberto && atual > ultimo && atual > 240);
     ultimo = atual;
   }, { passive: true });
 }
@@ -80,13 +106,19 @@ function ativarMenuCelular() {
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") fechar(); });
 }
 
-// A lupa do topo abre a busca em tela cheia. Sem JavaScript ela é só um
-// link para a página /busca. A busca em si é feita no servidor (RF03).
+// A lupa do topo abre a busca em tela cheia, com resultados enquanto se
+// digita (vindos da API /api/v1/conteudos). Sem JavaScript ela é só um link
+// para a página /busca. A busca em si é feita no servidor (RF03).
 function ativarBuscaTelaCheia() {
   const botao = document.getElementById("search-btn");
   const modal = document.getElementById("search-modal");
   if (!botao || !modal) return;
   const campo = modal.querySelector("#search-input");
+  const lista = modal.querySelector("#search-results");
+  const status = modal.querySelector("#search-status");
+  const textoInicial = status.textContent;
+  let espera = null;
+  let controle = null;
 
   const abrir = () => {
     modal.hidden = false;
@@ -100,6 +132,55 @@ function ativarBuscaTelaCheia() {
     setTimeout(() => { modal.hidden = true; }, 300);
     botao.focus();
   };
+
+  // Monta os resultados com textContent (nunca HTML), contra XSS.
+  const mostrar = (itens, total, termo) => {
+    lista.replaceChildren();
+    itens.forEach((item) => {
+      const li = document.createElement("li");
+      const a = document.createElement("a");
+      a.href = item.url;
+      const cat = document.createElement("span");
+      cat.className = "category-label category--destaque";
+      cat.textContent = item.categoria.nome;
+      const titulo = document.createElement("strong");
+      titulo.textContent = item.titulo;
+      const resumo = document.createElement("span");
+      resumo.className = "search-modal__resumo";
+      resumo.textContent = item.resumo;
+      a.append(cat, titulo, resumo);
+      li.append(a);
+      lista.append(li);
+    });
+    status.textContent = total
+      ? `${total} resultado(s) para "${termo}".`
+      : `Nada encontrado para "${termo}". Tente outra palavra.`;
+  };
+
+  const buscar = async (termo) => {
+    if (controle) controle.abort();
+    controle = new AbortController();
+    try {
+      const url = `${modal.dataset.api}?limite=6&q=${encodeURIComponent(termo)}`;
+      const resposta = await fetch(url, { signal: controle.signal });
+      if (!resposta.ok) throw new Error(resposta.status);
+      const dados = await resposta.json();
+      mostrar(dados.conteudos, dados.total, termo);
+    } catch (erro) {
+      if (erro.name !== "AbortError") status.textContent = "Não foi possível buscar agora. Aperte Enter.";
+    }
+  };
+
+  campo.addEventListener("input", () => {
+    clearTimeout(espera);
+    const termo = campo.value.trim();
+    if (termo.length < 2) {
+      lista.replaceChildren();
+      status.textContent = textoInicial;
+      return;
+    }
+    espera = setTimeout(() => buscar(termo), 250);
+  });
 
   botao.addEventListener("click", (e) => {
     e.preventDefault();
@@ -224,4 +305,91 @@ function ativarFontes() {
     }
     adicionar.focus();
   });
+}
+
+// Aviso rápido no canto da tela (ex.: "Link copiado").
+function avisar(texto) {
+  const toast = document.getElementById("aviso-toast");
+  if (!toast) return;
+  toast.textContent = texto;
+  toast.hidden = false;
+  clearTimeout(avisar.espera);
+  avisar.espera = setTimeout(() => { toast.hidden = true; }, 3000);
+}
+
+// Checklist de documentos: o visitante marca o que já separou. A marcação
+// fica só neste navegador, ligada ao endereço do conteúdo.
+function ativarChecklist() {
+  const lista = document.querySelector("[data-checklist]");
+  if (!lista) return;
+  const chave = `checklist:${lista.dataset.checklist}`;
+  const caixas = [...lista.querySelectorAll("input[type=checkbox]")];
+  const contador = document.getElementById("checklist-contador");
+  let marcados = [];
+  try { marcados = JSON.parse(preferencias.ler(chave) || "[]"); } catch (erro) { marcados = []; }
+
+  const atualizar = () => {
+    const feitos = caixas.filter((c) => c.checked).length;
+    if (contador) contador.textContent = `${feitos} de ${caixas.length} separados`;
+    lista.classList.toggle("checklist--completo", feitos === caixas.length);
+  };
+  const salvar = () => {
+    const escolhidos = caixas.map((c, n) => (c.checked ? n : -1)).filter((n) => n >= 0);
+    preferencias.gravar(chave, JSON.stringify(escolhidos));
+    atualizar();
+  };
+  caixas.forEach((caixa, i) => {
+    caixa.checked = marcados.includes(i);
+    caixa.addEventListener("change", salvar);
+  });
+  const limpar = document.getElementById("checklist-limpar");
+  if (limpar) {
+    limpar.hidden = false;
+    limpar.addEventListener("click", () => {
+      caixas.forEach((c) => { c.checked = false; });
+      salvar();
+    });
+  }
+  atualizar();
+}
+
+// Barra do conteúdo: imprimir e compartilhar.
+function ativarFerramentasConteudo() {
+  const barra = document.getElementById("ferramentas-conteudo");
+  if (!barra) return;
+  barra.hidden = false;
+
+  barra.querySelector("[data-imprimir]")?.addEventListener("click", () => {
+    // Abre todas as partes antes de imprimir, para nada ficar escondido.
+    document.querySelectorAll("details.bloco").forEach((d) => { d.open = true; });
+    window.print();
+  });
+
+  barra.querySelector("[data-compartilhar]")?.addEventListener("click", async () => {
+    const dados = { title: document.title, url: window.location.href.split("#")[0] };
+    if (navigator.share) {
+      try { await navigator.share(dados); } catch (erro) { /* cancelado */ }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(dados.url);
+      avisar("Link copiado. É só colar no WhatsApp ou onde quiser.");
+    } catch (erro) {
+      avisar("Copie o endereço na barra do navegador.");
+    }
+  });
+
+  // Se o endereço tiver #parte, abre essa parte do conteúdo.
+  const abrirAncora = () => {
+    const alvo = window.location.hash && document.getElementById(window.location.hash.slice(1));
+    if (alvo && alvo.tagName === "DETAILS") alvo.open = true;
+  };
+  window.addEventListener("hashchange", abrirAncora);
+  abrirAncora();
+}
+
+// Aplicativo (PWA): guarda as páginas visitadas para abrir sem internet.
+function registrarServiceWorker() {
+  if (!("serviceWorker" in navigator) || !window.isSecureContext) return;
+  navigator.serviceWorker.register("/sw.js").catch(() => { /* segue sem modo offline */ });
 }

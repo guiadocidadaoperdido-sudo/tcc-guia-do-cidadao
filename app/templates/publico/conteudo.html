@@ -3,7 +3,8 @@
 {% block descricao %}{{ conteudo.resumo }}{% endblock %}
 
 {% block conteudo %}
-<article class="pagina conteudo">
+{% set documentos = conteudo.documentos | linhas %}
+<div class="pagina pagina-conteudo">
   <nav class="trilha" aria-label="Você está em">
     <ol>
       <li><a href="{{ url_for('publico.inicio') }}">Início</a></li>
@@ -12,89 +13,143 @@
     </ol>
   </nav>
 
-  <header class="pagina__cabecalho">
-    <span class="category-label category--destaque">{{ conteudo.categoria.nome }}</span>
-    <h1 class="pagina__titulo">{{ conteudo.titulo }}</h1>
-    <p class="subtitulo">{{ conteudo.resumo }}</p>
-    <p class="data-atualizacao">Atualizado em <time datetime="{{ conteudo.atualizado_em.strftime('%Y-%m-%d') }}">{{ conteudo.atualizado_em | data }}</time></p>
-  </header>
+  <div class="conteudo-layout">
+    <article class="conteudo">
+      <header class="pagina__cabecalho">
+        <span class="category-label category--destaque">{{ conteudo.categoria.nome }}</span>
+        <h1 class="pagina__titulo">{{ conteudo.titulo }}</h1>
+        <p class="subtitulo">{{ conteudo.resumo }}</p>
+        <p class="data-atualizacao">Atualizado em <time datetime="{{ conteudo.atualizado_em.strftime('%Y-%m-%d') }}">{{ conteudo.atualizado_em | data }}</time></p>
+        <div class="ferramentas" id="ferramentas-conteudo" hidden>
+          <button type="button" class="ferramenta" data-imprimir>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
+            Imprimir
+          </button>
+          <button type="button" class="ferramenta" data-compartilhar>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
+            Compartilhar
+          </button>
+        </div>
+      </header>
 
-  {# RF04: o conteúdo dividido em partes que abrem e fecham #}
-  <div class="blocos">
-    <details class="bloco" open>
-      <summary>O que é</summary>
-      <div class="bloco__corpo">
-        {% for p in conteudo.o_que_e | paragrafos %}<p>{{ p }}</p>{% endfor %}
-      </div>
-    </details>
+      {# RF04: o conteúdo dividido em partes que abrem e fecham #}
+      <div class="blocos">
+        <details class="bloco" id="o-que-e" open>
+          <summary>O que é</summary>
+          <div class="bloco__corpo">
+            {% for p in conteudo.o_que_e | paragrafos %}<p>{{ p }}</p>{% endfor %}
+          </div>
+        </details>
 
-    {% if conteudo.quem_tem_direito %}
-    <details class="bloco">
-      <summary>Quem tem direito</summary>
-      <div class="bloco__corpo">
-        <ul>{% for item in conteudo.quem_tem_direito | linhas %}<li>{{ item }}</li>{% endfor %}</ul>
-      </div>
-    </details>
-    {% endif %}
+        {% if conteudo.quem_tem_direito %}
+        <details class="bloco" id="quem-tem-direito">
+          <summary>Quem tem direito</summary>
+          <div class="bloco__corpo">
+            <ul>{% for item in conteudo.quem_tem_direito | linhas %}<li>{{ item }}</li>{% endfor %}</ul>
+          </div>
+        </details>
+        {% endif %}
 
-    {% if conteudo.documentos %}
-    <details class="bloco">
-      <summary>Documentos necessários</summary>
-      <div class="bloco__corpo">
-        <ul class="lista-check">{% for item in conteudo.documentos | linhas %}<li>{{ item }}</li>{% endfor %}</ul>
-      </div>
-    </details>
-    {% endif %}
+        {% if documentos %}
+        <details class="bloco" id="documentos">
+          <summary>Documentos necessários</summary>
+          <div class="bloco__corpo">
+            <p class="checklist__dica">Marque o que você já separou. A marcação fica só neste aparelho.</p>
+            <ul class="checklist" data-checklist="{{ conteudo.slug }}">
+              {% for item in documentos %}
+              <li>
+                <label>
+                  <input type="checkbox" name="documento-{{ loop.index }}">
+                  <span>{{ item }}</span>
+                </label>
+              </li>
+              {% endfor %}
+            </ul>
+            <p class="checklist__rodape">
+              <span id="checklist-contador" aria-live="polite"></span>
+              <button type="button" class="link-botao" id="checklist-limpar" hidden>Desmarcar tudo</button>
+            </p>
+          </div>
+        </details>
+        {% endif %}
 
-    {% if conteudo.como_solicitar %}
-    <details class="bloco">
-      <summary>Como solicitar: passo a passo</summary>
-      <div class="bloco__corpo">
-        <ol class="passos">{% for item in conteudo.como_solicitar | linhas %}<li>{{ item }}</li>{% endfor %}</ol>
+        {% if conteudo.como_solicitar %}
+        <details class="bloco" id="passo-a-passo">
+          <summary>Como solicitar: passo a passo</summary>
+          <div class="bloco__corpo">
+            <ol class="passos">{% for item in conteudo.como_solicitar | linhas %}<li>{{ item }}</li>{% endfor %}</ol>
+          </div>
+        </details>
+        {% endif %}
       </div>
-    </details>
-    {% endif %}
+
+      {# RF06 #}
+      {% if conteudo.alerta_golpes %}
+      <aside class="alerta-golpe" aria-labelledby="titulo-golpe">
+        <h2 id="titulo-golpe">Atenção aos golpes</h2>
+        {% for p in conteudo.alerta_golpes | paragrafos %}<p>{{ p }}</p>{% endfor %}
+      </aside>
+      {% endif %}
+
+      {# RF05 #}
+      <section class="fontes" id="fontes" aria-labelledby="titulo-fontes">
+        <h2 id="titulo-fontes">Fontes oficiais</h2>
+        <p>Confira as informações e faça a solicitação nas páginas oficiais:</p>
+        <ul>
+          {% for fonte in conteudo.fontes %}
+          <li>
+            <a class="link-oficial" href="{{ fonte.url }}" target="_blank" rel="noopener noreferrer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>{{ fonte.titulo }}<span class="sr-only"> (abre em nova aba)</span></a>
+            <span class="fontes__orgao">{{ fonte.orgao }} · <span class="fontes__url">{{ fonte.url }}</span></span>
+          </li>
+          {% endfor %}
+        </ul>
+      </section>
+
+      {# RF07 #}
+      <section id="avaliacao" class="avaliacao" aria-labelledby="titulo-avaliacao">
+        <h2 id="titulo-avaliacao">Este conteúdo foi útil?</h2>
+        {% if ja_avaliou %}
+          <p class="avaliacao__obrigado" role="status">Você já respondeu. Obrigado!</p>
+        {% else %}
+        <form class="avaliacao__form" method="post" action="{{ url_for('publico.avaliar', slug=conteudo.slug) }}" data-avaliacao>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <label for="comentario" class="avaliacao__rotulo">Quer deixar uma sugestão? (opcional, não escreva dados pessoais)</label>
+          <textarea id="comentario" name="comentario" maxlength="500" rows="2"></textarea>
+          <div class="avaliacao__botoes">
+            <button type="submit" name="util" value="sim" class="botao botao--verde">Sim</button>
+            <button type="submit" name="util" value="nao" class="botao botao--contorno">Não</button>
+          </div>
+        </form>
+        <p class="avaliacao__obrigado" role="status" tabindex="-1" hidden></p>
+        {% endif %}
+      </section>
+    </article>
+
+    <aside class="conteudo-lateral" aria-label="Resumo do conteúdo">
+      <div class="painel-lateral">
+        <h2 class="painel-lateral__titulo">Nesta página</h2>
+        <ol class="indice">
+          <li><a href="#o-que-e">O que é</a></li>
+          {% if conteudo.quem_tem_direito %}<li><a href="#quem-tem-direito">Quem tem direito</a></li>{% endif %}
+          {% if documentos %}<li><a href="#documentos">Documentos ({{ documentos | length }})</a></li>{% endif %}
+          {% if conteudo.como_solicitar %}<li><a href="#passo-a-passo">Passo a passo</a></li>{% endif %}
+          <li><a href="#fontes">Fontes oficiais</a></li>
+          <li><a href="#avaliacao">Foi útil?</a></li>
+        </ol>
+        {% if conteudo.fontes %}
+        <a class="link-oficial link-oficial--largo" href="{{ conteudo.fontes[0].url }}" target="_blank" rel="noopener noreferrer">Ir para o site oficial<span class="sr-only"> (abre em nova aba)</span></a>
+        {% endif %}
+      </div>
+    </aside>
   </div>
 
-  {# RF06 #}
-  {% if conteudo.alerta_golpes %}
-  <aside class="alerta-golpe" aria-labelledby="titulo-golpe">
-    <h2 id="titulo-golpe">Atenção aos golpes</h2>
-    {% for p in conteudo.alerta_golpes | paragrafos %}<p>{{ p }}</p>{% endfor %}
-  </aside>
-  {% endif %}
-
-  {# RF05 #}
-  <section class="fontes" aria-labelledby="titulo-fontes">
-    <h2 id="titulo-fontes">Fontes oficiais</h2>
-    <p>Confira as informações e faça a solicitação nas páginas oficiais:</p>
-    <ul>
-      {% for fonte in conteudo.fontes %}
-      <li>
-        <a class="link-oficial" href="{{ fonte.url }}" target="_blank" rel="noopener noreferrer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>{{ fonte.titulo }}<span class="sr-only"> (abre em nova aba)</span></a>
-        <span class="fontes__orgao">{{ fonte.orgao }}</span>
-      </li>
-      {% endfor %}
+  {% if relacionados %}
+  <section class="section-block relacionados" aria-labelledby="titulo-relacionados">
+    <div class="section-header"><h2 id="titulo-relacionados">Veja também</h2></div>
+    <ul class="lista-conteudos lista-conteudos--tres">
+      {% for item in relacionados %}{% include "publico/_cartao.html" %}{% endfor %}
     </ul>
   </section>
-
-  {# RF07 #}
-  <section id="avaliacao" class="avaliacao" aria-labelledby="titulo-avaliacao">
-    <h2 id="titulo-avaliacao">Este conteúdo foi útil?</h2>
-    {% if ja_avaliou %}
-      <p class="avaliacao__obrigado" role="status">Você já respondeu. Obrigado!</p>
-    {% else %}
-    <form class="avaliacao__form" method="post" action="{{ url_for('publico.avaliar', slug=conteudo.slug) }}" data-avaliacao>
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <label for="comentario" class="avaliacao__rotulo">Quer deixar uma sugestão? (opcional, não escreva dados pessoais)</label>
-      <textarea id="comentario" name="comentario" maxlength="500" rows="2"></textarea>
-      <div class="avaliacao__botoes">
-        <button type="submit" name="util" value="sim" class="botao botao--verde">Sim</button>
-        <button type="submit" name="util" value="nao" class="botao botao--contorno">Não</button>
-      </div>
-    </form>
-    <p class="avaliacao__obrigado" role="status" tabindex="-1" hidden></p>
-    {% endif %}
-  </section>
-</article>
+  {% endif %}
+</div>
 {% endblock %}

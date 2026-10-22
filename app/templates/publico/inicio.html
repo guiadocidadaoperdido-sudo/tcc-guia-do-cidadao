@@ -1,6 +1,7 @@
 {% extends "base.html" %}
+{% from "publico/_icones.html" import icone_tema %}
 
-{# Imagem de cada tema inicial. Temas novos aparecem sem imagem. #}
+{# Foto dos quatro temas iniciais. Os outros temas aparecem com ícone. #}
 {% set imagens = {
   "assistencia-social": ("bolsa.jpg", "Família recebendo benefício social"),
   "moradia": ("casa.jpg", "Conjunto habitacional"),
@@ -40,6 +41,10 @@
         <div class="service-card__image">
           <img src="{{ url_for('static', filename='img/' ~ imagem[0]) }}" alt="{{ imagem[1] }}" width="900" height="604" loading="lazy">
           <div class="service-card__image-overlay"></div>
+        </div>
+        {% else %}
+        <div class="service-card__image service-card__icone service-card__icone--{{ loop.index0 % 4 }}">
+          {{ icone_tema(cat.slug, 72) }}
         </div>
         {% endif %}
         <div class="service-card__body">

@@ -1,0 +1,5 @@
+Fontes Source Serif 4 e Inter, baixadas do Google Fonts
+(subconjunto latino, que cobre o português). Todas sob a SIL Open Font
+License 1.1: https://openfontlicense.org
+Servidas pelo próprio site para que nenhum serviço de terceiros receba
+dados do visitante (RNF10).

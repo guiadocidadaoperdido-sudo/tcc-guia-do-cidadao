@@ -4,17 +4,33 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="{% block descricao %}Direitos, deveres e serviços públicos explicados em linguagem simples, sempre com link para a fonte oficial.{% endblock %}">
+  <meta name="theme-color" content="#002776">
   <title>{% block titulo %}Guia do Cidadão Perdido{% endblock %}</title>
   <link rel="icon" href="{{ url_for('static', filename='img/icone.svg') }}" type="image/svg+xml">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,700;1,900&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/icone-192.png') }}">
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
+  <link rel="preload" href="{{ url_for('static', filename='fonts/source-serif-4-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/estilo.css') }}">
-  {# Carregado no topo (sem defer) para marcar a página com a classe "js" antes de desenhar. #}
+  {# Carregado no topo (sem defer) para aplicar contraste e tamanho da letra antes de desenhar. #}
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </head>
 <body class="{% block classe_body %}{% endblock %}">
-  <a class="pular" href="#principal">Pular para o conteúdo</a>
+  <div class="barra-acessibilidade">
+    <div class="barra-acessibilidade__linha">
+      <a class="pular" href="#principal" accesskey="1">Ir para o conteúdo <span aria-hidden="true">[1]</span></a>
+      <div class="barra-acessibilidade__controles" id="controles-acessibilidade" hidden>
+        <span class="barra-acessibilidade__rotulo" id="rotulo-letra">Tamanho da letra</span>
+        <div class="grupo-botoes" role="group" aria-labelledby="rotulo-letra">
+          <button type="button" data-fonte="-1" aria-label="Diminuir letra">A−</button>
+          <button type="button" data-fonte="0" aria-label="Letra normal">A</button>
+          <button type="button" data-fonte="1" aria-label="Aumentar letra">A+</button>
+        </div>
+        <button type="button" class="botao-contraste" id="contrast-toggle" aria-pressed="false">
+          <span class="mode-icon" aria-hidden="true">◐</span> Alto contraste
+        </button>
+      </div>
+    </div>
+  </div>
 
   <header class="site-header" id="site-header">
     <div class="header-top">
@@ -32,27 +48,24 @@
       </div>
       <div class="header-top__right">
         <a class="icon-btn" id="search-btn" href="{{ url_for('publico.busca') }}" aria-label="Buscar">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><path d="M21 21l-4.35-4.35"></path></svg>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><path d="M21 21l-4.35-4.35"></path></svg>
         </a>
-        <button type="button" class="icon-btn" id="contrast-toggle" aria-label="Alto contraste" aria-pressed="false">
-          <span class="mode-icon" aria-hidden="true">◐</span>
-        </button>
       </div>
     </div>
     {% block menu %}
     <nav class="main-nav" id="main-nav" aria-label="Menu principal">
       <ul>
-        <li><a href="{{ url_for('publico.inicio') }}">Início</a></li>
+        <li><a href="{{ url_for('publico.inicio') }}" {% if request.endpoint == 'publico.inicio' %}aria-current="page"{% endif %}>Início</a></li>
         <li><a href="{{ url_for('publico.inicio') }}#temas">Temas</a></li>
         <li><a href="{{ url_for('publico.inicio') }}#como-funciona">Como funciona</a></li>
-        <li><a href="{{ url_for('publico.busca') }}">Buscar</a></li>
-        <li><a href="{{ url_for('publico.sobre') }}">Sobre</a></li>
+        <li><a href="{{ url_for('publico.busca') }}" {% if request.endpoint == 'publico.busca' %}aria-current="page"{% endif %}>Buscar</a></li>
+        <li><a href="{{ url_for('publico.sobre') }}" {% if request.endpoint == 'publico.sobre' %}aria-current="page"{% endif %}>Sobre</a></li>
       </ul>
     </nav>
     {% endblock %}
   </header>
 
-  <div class="search-modal" id="search-modal" hidden>
+  <div class="search-modal" id="search-modal" hidden data-api="{{ url_for('api.conteudos') }}">
     <div class="search-modal__overlay"></div>
     <div class="search-modal__content" role="dialog" aria-modal="true" aria-labelledby="search-modal-titulo">
       <button type="button" class="search-modal__close" id="search-close" aria-label="Fechar busca">✕</button>
@@ -60,9 +73,10 @@
       <form action="{{ url_for('publico.busca') }}" method="get" role="search" class="search-modal__input-wrap">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><path d="M21 21l-4.35-4.35"></path></svg>
         <label for="search-input" class="sr-only">O que você procura?</label>
-        <input type="search" id="search-input" name="q" maxlength="100" placeholder="O que você procura? (Ex.: Bolsa Família, CNH)" autocomplete="off">
+        <input type="search" id="search-input" name="q" maxlength="100" placeholder="O que você procura? (Ex.: Bolsa Família, CNH)" autocomplete="off" aria-describedby="search-status" aria-controls="search-results">
       </form>
-      <p class="search-modal__hint">Digite e aperte Enter para buscar serviços, direitos e documentos.</p>
+      <p class="search-modal__hint" id="search-status" role="status">Digite para ver os resultados. Enter abre a busca completa.</p>
+      <ul class="search-modal__results" id="search-results"></ul>
     </div>
   </div>
 
@@ -91,15 +105,17 @@
             <li><a href="{{ url_for('publico.inicio') }}">Início</a></li>
             <li><a href="{{ url_for('publico.inicio') }}#temas">Temas</a></li>
             <li><a href="{{ url_for('publico.busca') }}">Buscar</a></li>
-            <li><a href="{{ url_for('publico.sobre') }}">Sobre</a></li>
+            <li><a href="{{ url_for('publico.sobre') }}">Sobre e privacidade</a></li>
+            <li><a href="{{ url_for('api.conteudos') }}">Dados abertos (API)</a></li>
           </ul>
         </div>
         <div class="footer__col">
-          <h2>Fontes oficiais</h2>
+          <h2>Canais oficiais</h2>
           <ul>
             <li><a href="https://www.gov.br" target="_blank" rel="noopener noreferrer">Portal gov.br</a></li>
-            <li><a href="https://www.gov.br/mds" target="_blank" rel="noopener noreferrer">Ministério do Desenvolvimento Social</a></li>
-            <li><a href="https://www.gov.br/cidades" target="_blank" rel="noopener noreferrer">Ministério das Cidades</a></li>
+            <li><a href="https://www.gov.br/pt-br/servicos" target="_blank" rel="noopener noreferrer">Serviços do governo</a></li>
+            <li><a href="https://www.gov.br/governodigital/pt-br/conta-gov-br" target="_blank" rel="noopener noreferrer">Conta gov.br</a></li>
+            <li><a href="https://falabr.cgu.gov.br" target="_blank" rel="noopener noreferrer">Fala.BR (ouvidoria)</a></li>
           </ul>
         </div>
       </div>
@@ -114,5 +130,6 @@
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="18 15 12 9 6 15"></polyline></svg>
   </button>
 
+  <div class="aviso-toast" id="aviso-toast" role="status" aria-live="polite" hidden></div>
 </body>
 </html>

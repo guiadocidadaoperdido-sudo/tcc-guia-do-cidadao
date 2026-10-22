@@ -51,6 +51,15 @@ class Config:
 
     ITENS_POR_PAGINA = 10
 
+    # Limite de tentativas (Flask-Limiter). Guardado na memória do servidor.
+    RATELIMIT_STORAGE_URI = "memory://"
+    RATELIMIT_HEADERS_ENABLED = True
+    LIMITE_LOGIN = "5 per minute;20 per hour"
+    LIMITE_AVALIACAO = "30 per hour"
+
+    # Nível dos registros (logs) mostrados no terminal e no painel do Render.
+    NIVEL_LOG = os.environ.get("NIVEL_LOG", "INFO")
+
 
 class ConfigTeste(Config):
     TESTING = True
@@ -63,3 +72,6 @@ class ConfigTeste(Config):
         if SQLALCHEMY_DATABASE_URI.startswith("postgresql") else {}
     )
     WTF_CSRF_ENABLED = False
+    # Nos testes o limite fica desligado; o teste do limite liga de novo.
+    RATELIMIT_ENABLED = False
+    NIVEL_LOG = "WARNING"

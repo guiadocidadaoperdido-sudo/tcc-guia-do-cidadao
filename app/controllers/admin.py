@@ -2,11 +2,11 @@
 from datetime import datetime
 from urllib.parse import urlsplit
 
-from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
+from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 from sqlalchemy import func
 
-from ..extensions import db
+from ..extensions import db, limiter
 from ..forms import CategoriaForm, ConteudoForm, LoginForm
 from ..models import Administrador, Avaliacao, Categoria, Conteudo, FonteOficial
 from ..utils import gerar_slug, url_segura
@@ -43,7 +43,15 @@ def _destino_seguro(destino):
     return destino
 
 
+def _registrar(acao, *args):
+    """Registra no log uma ação da área administrativa, com o e-mail de quem fez."""
+    quem = current_user.email if current_user.is_authenticated else "-"
+    current_app.logger.info("[admin %s] " + acao, quem, *args)
+
+
 @bp.route("/login", methods=["GET", "POST"])
+# Limite de tentativas por IP contra adivinhação de senha (força bruta).
+@limiter.limit(lambda: current_app.config["LIMITE_LOGIN"], methods=["POST"])
 def login():
     if current_user.is_authenticated:
         return redirect(url_for("admin.painel"))
@@ -53,15 +61,18 @@ def login():
         admin = Administrador.query.filter(func.lower(Administrador.email) == email).first()
         if admin and admin.conferir_senha(form.senha.data):
             login_user(admin)
+            _registrar("entrou na área administrativa")
             flash(f"Olá, {admin.nome}!", "sucesso")
             return redirect(_destino_seguro(request.args.get("next")) or url_for("admin.painel"))
         # Mesma mensagem para e-mail e senha errados, para não revelar qual falhou.
+        current_app.logger.warning("Tentativa de login recusada.")
         flash("E-mail ou senha incorretos.", "erro")
     return render_template("admin/login.html", form=form)
 
 
 @bp.route("/sair", methods=["POST"])
 def sair():
+    _registrar("saiu da área administrativa")
     logout_user()
     flash("Você saiu da área administrativa.", "sucesso")
     return redirect(url_for("admin.login"))
@@ -108,6 +119,7 @@ def categoria_form(id=None):
             if not id:
                 db.session.add(categoria)
             db.session.commit()
+            _registrar("salvou a categoria %s", categoria.slug)
             flash("Categoria salva.", "sucesso")
             return redirect(url_for("admin.categorias"))
     return render_template("admin/categoria_form.html", form=form, categoria=categoria)
@@ -126,6 +138,7 @@ def categoria_excluir(id):
         return redirect(url_for("admin.categorias"))
     db.session.delete(categoria)
     db.session.commit()
+    _registrar("excluiu a categoria %s", categoria.slug)
     flash("Categoria excluída.", "sucesso")
     return redirect(url_for("admin.categorias"))
 
@@ -198,6 +211,7 @@ def conteudo_form(id=None):
                 if not id:
                     db.session.add(conteudo)
                 db.session.commit()
+                _registrar("salvou o conteúdo %s", conteudo.slug)
                 estado = "publicado" if conteudo.publicado else "salvo como rascunho"
                 flash(f"Conteúdo {estado}.", "sucesso")
                 return redirect(url_for("admin.conteudos"))
@@ -219,6 +233,7 @@ def conteudo_publicar(id):
     conteudo.publicado = not conteudo.publicado
     conteudo.administrador_id = current_user.id
     db.session.commit()
+    _registrar("%s o conteúdo %s", "publicou" if conteudo.publicado else "despublicou", conteudo.slug)
     flash("Conteúdo publicado." if conteudo.publicado else "Conteúdo retirado do site.", "sucesso")
     return redirect(url_for("admin.conteudos"))
 
@@ -228,6 +243,7 @@ def conteudo_excluir(id):
     conteudo = db.get_or_404(Conteudo, id)
     db.session.delete(conteudo)
     db.session.commit()
+    _registrar("excluiu o conteúdo %s", conteudo.slug)
     flash("Conteúdo excluído.", "sucesso")
     return redirect(url_for("admin.conteudos"))
 

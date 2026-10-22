@@ -1,0 +1,24 @@
+{# Ícone de cada tema (traço simples, cor do texto). Temas novos usam o ícone padrão. #}
+{% macro icone_tema(slug, tamanho=48) %}
+<svg width="{{ tamanho }}" height="{{ tamanho }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+{% if slug == "documentos" %}
+  <rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="11" r="2"/><path d="M5.5 16c.6-1.6 1.7-2.4 3-2.4s2.4.8 3 2.4M14 10h4M14 13h4"/>
+{% elif slug == "trabalho" %}
+  <rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18M11 12h2v2h-2z"/>
+{% elif slug == "saude" %}
+  <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/><path d="M12 9v5M9.5 11.5h5"/>
+{% elif slug == "educacao" %}
+  <path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c2 1.7 4 2.5 6 2.5s4-.8 6-2.5v-5M22 9v6"/>
+{% elif slug == "assistencia-social" %}
+  <circle cx="8" cy="7" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-3.3 2.2-6 5-6s5 2.7 5 6M13.5 20c.3-2.6 1.7-4.5 3.5-4.5s3.2 1.9 3.5 4.5"/>
+{% elif slug == "moradia" %}
+  <path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10M10 20v-6h4v6"/>
+{% elif slug == "servico-militar" %}
+  <path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/>
+{% elif slug == "transito-e-habilitacao" %}
+  <path d="M5 16l1.5-5A2 2 0 0 1 8.4 9.6h7.2a2 2 0 0 1 1.9 1.4L19 16"/><rect x="3" y="16" width="18" height="4" rx="1"/><circle cx="7" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/>
+{% else %}
+  <circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/>
+{% endif %}
+</svg>
+{% endmacro %}

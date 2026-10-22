@@ -4,9 +4,9 @@ services:
     name: guia-do-cidadao-perdido
     runtime: python
     plan: free
-    buildCommand: pip install -r requirements.txt && flask --app run criar-banco
+    buildCommand: pip install -r requirements.txt && flask --app run criar-banco   # aplica as migrações
     startCommand: gunicorn run:app --workers 2 --bind 0.0.0.0:$PORT
-    healthCheckPath: /sobre
+    healthCheckPath: /saude    # responde 200 se o site e o banco estiverem funcionando
     envVars:
       - key: DATABASE_URL
         sync: false          # o Render pede o valor na criação (endereço do Neon)
