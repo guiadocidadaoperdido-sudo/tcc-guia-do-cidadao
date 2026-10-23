@@ -1,0 +1,90 @@
+{#
+  Admin: Contas ativas / Contas bloqueadas / Contas excluídas (mesmo padrão do FacilMed).
+  A mesma página serve as três telas; as abas levam de uma para a outra, com o total de cada.
+  O bloqueio abre num <details>, sem JavaScript (a CSP não deixa script dentro do HTML).
+#}
+{% extends "admin/base_admin.html" %}
+{% from "admin/_campo.html" import campo %}
+{% block titulo_admin %}{{ titulo }}{% endblock %}
+
+{% set nomes_abas = {"ativas": "Ativas", "bloqueadas": "Bloqueadas", "excluidas": "Excluídas"} %}
+
+{% block conteudo_admin %}
+<div class="cabecalho-pagina">
+  <div>
+    <h1>{{ titulo }}</h1>
+    <p class="subtitulo">{{ subtitulo }}</p>
+  </div>
+</div>
+
+<nav class="abas" aria-label="Situação das contas">
+  {% for chave, s in situacoes.items() %}
+  <a href="{{ url_for(s[1], busca=busca or None) }}" class="aba{% if chave == situacao %} aba--ativa{% endif %}" {% if chave == situacao %}aria-current="page"{% endif %}>
+    {{ nomes_abas[chave] }} <span class="aba__total">{{ contagem[chave] }}</span>
+  </a>
+  {% endfor %}
+</nav>
+
+{% if situacao != "excluidas" %}
+<form method="get" class="filtro-contas" role="search">
+  <label for="busca" class="campo__rotulo">Buscar por e-mail</label>
+  <input type="search" id="busca" name="busca" value="{{ busca }}" maxlength="100">
+  <button type="submit" class="botao botao--azul">Buscar</button>
+  {% if busca %}<a href="{{ url_for(situacoes[situacao][1]) }}">Limpar</a>{% endif %}
+</form>
+{% endif %}
+
+{% if pagina.items %}
+<ul class="lista-contas">
+  {% for u in pagina.items %}
+  <li class="conta">
+    <div class="conta__linha">
+      <div class="conta__info">
+        <strong>{{ u.email if u.email else "Conta nº " ~ u.id }}</strong>
+        <span>Criada em {{ u.criado_em|data }}</span>
+      </div>
+      {% if u.status == "ativo" %}<span class="selo selo--verde">Ativa</span>
+      {% elif u.status == "bloqueado" %}<span class="selo selo--vermelho">Bloqueada</span>
+      {% else %}<span class="selo">Excluída</span>{% endif %}
+
+      {% if u.status == "bloqueado" %}
+      <form method="post" action="{{ url_for('admin.usuario_desbloquear', id=u.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="botao botao--verde">Desbloquear</button>
+      </form>
+      {% endif %}
+    </div>
+
+    {% if u.status == "ativo" %}
+    <details class="conta__bloquear">
+      <summary class="link-perigo">Bloquear</summary>
+      <form method="post" action="{{ url_for('admin.usuario_bloquear', id=u.id) }}" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {{ campo(form_bloqueio.motivo) }}
+        <button type="submit" class="botao botao--perigo">Confirmar bloqueio</button>
+      </form>
+    </details>
+    {% elif u.status == "bloqueado" %}
+    <p class="campo__dica">Bloqueada em {{ u.bloqueado_em|data }}{% if u.bloqueado_por %} por {{ u.bloqueado_por.nome }}{% endif %}. Motivo (interno): {{ u.motivo_bloqueio or "—" }}</p>
+    <form method="post" action="{{ url_for('admin.usuario_excluir_dados', id=u.id) }}" data-confirmar="Apagar o e-mail, a senha e os dados de {{ u.email }}? Use só se a pessoa pediu. Não dá para desfazer.">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="link-perigo">Excluir dados a pedido do titular</button>
+    </form>
+    {% else %}
+    <p class="campo__dica">Excluída pelo próprio cidadão em {{ u.excluida_em|data }}. Os dados pessoais foram apagados.</p>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>
+
+{% if pagina.pages > 1 %}
+<nav class="paginacao" aria-label="Páginas">
+  {% if pagina.has_prev %}<a href="{{ url_for(situacoes[situacao][1], page=pagina.prev_num, busca=busca or None) }}">← Anterior</a>{% endif %}
+  <span>Página {{ pagina.page }} de {{ pagina.pages }}</span>
+  {% if pagina.has_next %}<a href="{{ url_for(situacoes[situacao][1], page=pagina.next_num, busca=busca or None) }}">Próxima →</a>{% endif %}
+</nav>
+{% endif %}
+{% else %}
+<p class="vazio">Nenhuma conta {{ {"ativas": "ativa", "bloqueadas": "bloqueada", "excluidas": "excluída"}[situacao] }}{% if busca %} com essa busca{% endif %}.</p>
+{% endif %}
+{% endblock %}

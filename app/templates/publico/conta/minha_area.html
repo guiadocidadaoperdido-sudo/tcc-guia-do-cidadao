@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% from "admin/_campo.html" import campo %}
+{% block titulo %}Minha área | Guia do Cidadão Perdido{% endblock %}
+
+{% block conteudo %}
+<div class="pagina">
+  <header class="pagina__cabecalho cabecalho-pagina">
+    <div>
+      <h1 class="pagina__titulo">Minha área</h1>
+      <p class="subtitulo">{{ usuario.email }} · conta criada em {{ usuario.criado_em|data }}</p>
+    </div>
+    <form method="post" action="{{ url_for('conta.sair') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="botao botao--contorno">Sair</button>
+    </form>
+  </header>
+
+  <section aria-labelledby="titulo-temas">
+    <h2 id="titulo-temas">Temas salvos</h2>
+    {% if usuario.acompanhamentos %}
+    <ul class="lista-conta">
+      {% for item in usuario.acompanhamentos %}
+      <li>
+        <a href="{{ url_for('publico.conteudo', slug=item.conteudo.slug) }}">{{ item.conteudo.titulo }}</a>
+        {% if item.tem_novidade %}<span class="etiqueta-novidade">Atualizado</span>{% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="vazio">Você ainda não salvou nenhum tema. <a href="{{ url_for('publico.inicio') }}#temas">Veja os temas</a>.</p>
+    {% endif %}
+  </section>
+
+  <section aria-labelledby="titulo-lembretes">
+    <h2 id="titulo-lembretes">Lembretes</h2>
+    {% if usuario.lembretes %}
+    <ul class="lista-conta">
+      {% for lembrete in usuario.lembretes %}
+      <li><strong>{{ lembrete.data|data }}</strong>: {{ lembrete.titulo }}</li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="vazio">Nenhum lembrete por enquanto.</p>
+    {% endif %}
+  </section>
+
+  <section id="excluir" class="zona-perigo" aria-labelledby="titulo-excluir">
+    <h2 id="titulo-excluir">Excluir minha conta</h2>
+    <p>Isso apaga seu e-mail, sua senha, os temas salvos e os lembretes. Não dá para desfazer.</p>
+    <form method="post" action="{{ url_for('conta.excluir') }}" novalidate>
+      {{ form_excluir.hidden_tag() }}
+      {{ campo(form_excluir.senha) }}
+      <button type="submit" class="botao botao--perigo">Excluir minha conta</button>
+    </form>
+  </section>
+</div>
+{% endblock %}

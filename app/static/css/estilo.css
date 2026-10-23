@@ -928,6 +928,51 @@ html.alto-contraste .back-to-top { color: #000; }
   border-radius: var(--raio);
 }
 
+/* ==================== Conta do cidadão ==================== */
+.caixa-login__rodape { margin: var(--space-md) 0 0; text-align: center; font-family: var(--font-ui); font-size: 0.92rem; }
+.lista-conta { list-style: none; padding: 0; margin: 0; }
+.lista-conta li { padding: var(--space-sm) 0; border-bottom: 1px solid var(--color-border); }
+.etiqueta-novidade {
+  display: inline-block;
+  margin-left: var(--space-sm);
+  padding: 2px 8px;
+  border-radius: var(--raio);
+  background: #fff8cc;
+  color: #121212;
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.zona-perigo {
+  margin-top: var(--space-xl);
+  padding: var(--space-lg);
+  border: 1px solid var(--cor-vermelho);
+  border-radius: var(--raio);
+  max-width: 520px;
+}
+.pagina .zona-perigo h2 { margin-top: 0; color: var(--cor-vermelho); }
+.botao--perigo { background: var(--cor-vermelho); color: #fff; }
+.botao--perigo:hover { background: #8c1d17; color: #fff; }
+html.alto-contraste .botao--perigo, html.alto-contraste .botao--perigo:hover { color: #000; }
+
+/* Contas dos cidadãos no admin (abas Ativas / Bloqueadas / Excluídas) */
+.abas { display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-bottom: var(--space-lg); border-bottom: 1px solid var(--color-border); }
+.aba { padding: var(--space-sm) var(--space-md); font-family: var(--font-ui); font-weight: 700; text-decoration: none; border-bottom: 3px solid transparent; }
+.aba--ativa { border-bottom-color: var(--cor-verde); color: var(--cor-azul); }
+.aba__total { display: inline-block; min-width: 1.6em; padding: 0 6px; margin-left: 4px; border-radius: 99px; background: var(--color-bg-alt); text-align: center; font-size: 0.8rem; }
+.filtro-contas { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-lg); }
+.filtro-contas input { flex: 1 1 220px; padding: 8px 10px; border: 1px solid var(--color-border); border-radius: var(--raio); }
+.lista-contas { list-style: none; padding: 0; margin: 0; }
+.conta { padding: var(--space-md) 0; border-bottom: 1px solid var(--color-border); }
+.conta__linha { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-md); }
+.conta__info { flex: 1 1 240px; display: flex; flex-direction: column; overflow-wrap: anywhere; }
+.conta__info span { font-size: 0.85rem; color: var(--color-text-muted); }
+.conta__bloquear { margin-top: var(--space-sm); }
+.conta__bloquear summary { cursor: pointer; display: inline-block; }
+.conta__bloquear form { margin-top: var(--space-sm); max-width: 520px; }
+.selo--vermelho { border-color: var(--cor-vermelho); color: var(--cor-vermelho); }
+.paginacao { display: flex; gap: var(--space-md); align-items: center; justify-content: center; margin-top: var(--space-lg); font-family: var(--font-ui); }
+
 .cabecalho-pagina {
   display: flex;
   flex-wrap: wrap;

@@ -47,6 +47,10 @@
         <p class="site-tagline">Seus direitos, de forma simples</p>
       </div>
       <div class="header-top__right">
+        {% set rotulo_conta = "Minha área" if cidadao else "Entrar ou criar conta" %}
+        <a class="icon-btn" href="{{ url_for('conta.minha_area') if cidadao else url_for('conta.entrar') }}" aria-label="{{ rotulo_conta }}" title="{{ rotulo_conta }}">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 4-7 8-7s8 3 8 7"></path></svg>
+        </a>
         <a class="icon-btn" id="search-btn" href="{{ url_for('publico.busca') }}" aria-label="Buscar">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><path d="M21 21l-4.35-4.35"></path></svg>
         </a>
@@ -60,6 +64,11 @@
         <li><a href="{{ url_for('publico.inicio') }}#como-funciona">Como funciona</a></li>
         <li><a href="{{ url_for('publico.busca') }}" {% if request.endpoint == 'publico.busca' %}aria-current="page"{% endif %}>Buscar</a></li>
         <li><a href="{{ url_for('publico.sobre') }}" {% if request.endpoint == 'publico.sobre' %}aria-current="page"{% endif %}>Sobre</a></li>
+        {% if cidadao %}
+        <li><a href="{{ url_for('conta.minha_area') }}" {% if request.endpoint == 'conta.minha_area' %}aria-current="page"{% endif %}>Minha área</a></li>
+        {% else %}
+        <li><a href="{{ url_for('conta.entrar') }}" {% if request.endpoint in ('conta.entrar', 'conta.cadastrar') %}aria-current="page"{% endif %}>Entrar</a></li>
+        {% endif %}
       </ul>
     </nav>
     {% endblock %}
@@ -106,6 +115,7 @@
             <li><a href="{{ url_for('publico.inicio') }}#temas">Temas</a></li>
             <li><a href="{{ url_for('publico.busca') }}">Buscar</a></li>
             <li><a href="{{ url_for('publico.sobre') }}">Sobre e privacidade</a></li>
+            <li><a href="{{ url_for('conta.minha_area') if cidadao else url_for('conta.entrar') }}">{{ "Minha área" if cidadao else "Entrar ou criar conta" }}</a></li>
             <li><a href="{{ url_for('api.conteudos') }}">Dados abertos (API)</a></li>
           </ul>
         </div>

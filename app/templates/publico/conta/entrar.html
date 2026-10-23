@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "admin/_campo.html" import campo %}
+{% block titulo %}Entrar | Guia do Cidadão Perdido{% endblock %}
+
+{% block conteudo %}
+<div class="pagina">
+  <div class="caixa-login">
+    <h1>Entrar</h1>
+    <p>Entre para ver seus temas salvos e seus lembretes.</p>
+    <form method="post" novalidate>
+      {{ form.hidden_tag() }}
+      {{ campo(form.email) }}
+      {{ campo(form.senha) }}
+      <button type="submit" class="botao botao--verde botao--largo">Entrar</button>
+    </form>
+    <p class="caixa-login__rodape">Ainda não tem conta? <a href="{{ url_for('conta.cadastrar') }}">Criar conta</a></p>
+  </div>
+</div>
+{% endblock %}

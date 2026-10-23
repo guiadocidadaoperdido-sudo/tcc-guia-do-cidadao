@@ -3,9 +3,10 @@
 //   atualiza em segundo plano.
 // - Páginas: busca na internet primeiro; sem internet, mostra a última versão
 //   guardada ou a página /offline.
-// A área administrativa, a API e os formulários (POST) nunca são guardados.
+// A área administrativa, a conta do cidadão, a API e os formulários (POST)
+// nunca são guardados.
 
-const VERSAO = "guia-v2";
+const VERSAO = "guia-v3";
 const ESSENCIAIS = [
   "/",
   "/offline",
@@ -34,7 +35,7 @@ self.addEventListener("fetch", (evento) => {
   const pedido = evento.request;
   const url = new URL(pedido.url);
   if (pedido.method !== "GET" || url.origin !== self.location.origin) return;
-  if (url.pathname.startsWith("/admin") || url.pathname.startsWith("/api/")) return;
+  if (["/admin", "/conta", "/api/"].some((p) => url.pathname.startsWith(p))) return;
 
   if (url.pathname.startsWith("/static/")) {
     evento.respondWith(

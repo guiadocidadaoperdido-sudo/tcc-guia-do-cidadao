@@ -36,11 +36,13 @@ def create_app(config_class=Config):
     from . import models  # noqa: F401  (registra as tabelas no SQLAlchemy)
     from .controllers.admin import bp as admin_bp
     from .controllers.api import bp as api_bp
+    from .controllers.conta import bp as conta_bp
     from .controllers.publico import bp as publico_bp
 
     app.register_blueprint(publico_bp)
     app.register_blueprint(admin_bp, url_prefix="/admin")
     app.register_blueprint(api_bp, url_prefix="/api/v1")
+    app.register_blueprint(conta_bp, url_prefix="/conta")
 
     app.add_template_filter(formatar_data, "data")
     app.add_template_filter(paragrafos, "paragrafos")

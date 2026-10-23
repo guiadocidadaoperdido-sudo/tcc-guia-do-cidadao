@@ -10,6 +10,7 @@
     <li><a href="{{ url_for('admin.conteudos') }}">Conteúdos</a></li>
     <li><a href="{{ url_for('admin.categorias') }}">Categorias</a></li>
     <li><a href="{{ url_for('admin.avaliacoes') }}">Avaliações</a></li>
+    <li><a href="{{ url_for('admin.usuarios') }}" {% if request.endpoint in ('admin.usuarios', 'admin.contas_bloqueadas', 'admin.contas_excluidas') %}aria-current="page"{% endif %}>Usuários</a></li>
     <li><a href="{{ url_for('publico.inicio') }}" target="_blank" rel="noopener">Ver site</a></li>
     <li>
       <form method="post" action="{{ url_for('admin.sair') }}">

@@ -26,16 +26,27 @@ def upgrade():
     sa.UniqueConstraint('termo')
     )
 
-    # Conta do cidadão (login opcional, LGPD: só e-mail, senha em hash e consentimento)
+    # Conta do cidadão (login opcional, LGPD: só e-mail, senha em hash e consentimento).
+    # Situação: ativo, bloqueado (pelo admin) ou excluido (pelo próprio cidadão;
+    # e-mail e senha ficam vazios e a conta não volta).
     op.create_table('usuario',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('email', sa.String(length=150), nullable=False),
-    sa.Column('senha_hash', sa.String(length=255), nullable=False),
+    sa.Column('email', sa.String(length=150), nullable=True),
+    sa.Column('senha_hash', sa.String(length=255), nullable=True),
     sa.Column('consentimento_em', sa.DateTime(), nullable=False),
     sa.Column('criado_em', sa.DateTime(), nullable=False),
+    sa.Column('status', sa.String(length=20), nullable=False),
+    sa.Column('motivo_bloqueio', sa.String(length=255), nullable=True),
+    sa.Column('bloqueado_por_id', sa.Integer(), nullable=True),
+    sa.Column('bloqueado_em', sa.DateTime(), nullable=True),
+    sa.Column('excluida_em', sa.DateTime(), nullable=True),
+    sa.CheckConstraint("status IN ('ativo', 'bloqueado', 'excluido')", name='ck_usuario_status'),
+    sa.CheckConstraint("excluida_em IS NULL OR status = 'excluido'", name='ck_usuario_excluida'),
+    sa.ForeignKeyConstraint(['bloqueado_por_id'], ['administrador.id'], ondelete='SET NULL'),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email')
     )
+    op.create_index('ix_usuario_status', 'usuario', ['status'])
 
     # Links suspeitos denunciados (o admin revisa)
     op.create_table('link_denunciado',
@@ -91,5 +102,6 @@ def downgrade():
     op.drop_index('ix_link_denunciado_status', table_name='link_denunciado')
     op.drop_index('ix_link_denunciado_dominio', table_name='link_denunciado')
     op.drop_table('link_denunciado')
+    op.drop_index('ix_usuario_status', table_name='usuario')
     op.drop_table('usuario')
     op.drop_table('termo_glossario')

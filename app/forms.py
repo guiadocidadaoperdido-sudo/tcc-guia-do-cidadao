@@ -1,7 +1,7 @@
-"""Formulários da área administrativa. O Flask-WTF inclui o token CSRF (RNF06)."""
+"""Formulários do site e da área administrativa. O Flask-WTF inclui o token CSRF (RNF06)."""
 from flask_wtf import FlaskForm
 from wtforms import BooleanField, EmailField, PasswordField, SelectField, StringField, TextAreaField
-from wtforms.validators import DataRequired, Email, Length, Optional, Regexp
+from wtforms.validators import DataRequired, Email, EqualTo, Length, Optional, Regexp
 
 SLUG_VALIDO = Regexp(
     r"^[a-z0-9]+(?:-[a-z0-9]+)*$",
@@ -9,9 +9,68 @@ SLUG_VALIDO = Regexp(
 )
 
 
+
+def tirar_espacos(texto):
+    """O teclado do celular costuma colocar um espaço depois do e-mail."""
+    return texto.strip() if isinstance(texto, str) else texto
+
+
 class LoginForm(FlaskForm):
-    email = EmailField("E-mail", validators=[DataRequired("Informe o e-mail."), Email("E-mail inválido.")])
+    email = EmailField(
+        "E-mail", filters=[tirar_espacos],
+        validators=[DataRequired("Informe o e-mail."), Email("E-mail inválido.")],
+    )
     senha = PasswordField("Senha", validators=[DataRequired("Informe a senha.")])
+
+
+# ---------- Conta do cidadão ----------
+
+SENHA_MINIMA = 8
+
+
+class CadastroForm(FlaskForm):
+    email = EmailField(
+        "E-mail", filters=[tirar_espacos],
+        validators=[DataRequired("Informe o e-mail."), Email("E-mail inválido."), Length(max=150)],
+    )
+    senha = PasswordField(
+        "Senha",
+        validators=[
+            DataRequired("Crie uma senha."),
+            Length(min=SENHA_MINIMA, max=128, message=f"A senha precisa ter pelo menos {SENHA_MINIMA} caracteres."),
+        ],
+        description=f"Pelo menos {SENHA_MINIMA} caracteres.",
+    )
+    confirmar_senha = PasswordField(
+        "Repita a senha",
+        validators=[DataRequired("Repita a senha."), EqualTo("senha", "As senhas não são iguais.")],
+    )
+    consentimento = BooleanField(
+        "Li e concordo que o guia guarde meu e-mail, os temas que eu salvar e meus "
+        "lembretes, só para eu usar a minha área.",
+        validators=[DataRequired("Para criar a conta, marque que você concorda.")],
+    )
+
+
+class ExcluirContaForm(FlaskForm):
+    senha = PasswordField(
+        "Digite sua senha para confirmar",
+        validators=[DataRequired("Digite sua senha para confirmar.")],
+    )
+
+
+# ---------- Área administrativa ----------
+
+class BloqueioForm(FlaskForm):
+    motivo = StringField(
+        "Motivo do bloqueio",
+        filters=[tirar_espacos],
+        validators=[
+            DataRequired("Informe o motivo do bloqueio."),
+            Length(min=10, max=255, message="Descreva o motivo com 10 a 255 caracteres."),
+        ],
+        description="Fica registrado aqui. A pessoa só vê que a conta está bloqueada, sem o motivo.",
+    )
 
 
 class CategoriaForm(FlaskForm):

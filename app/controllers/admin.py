@@ -7,8 +7,9 @@ from flask_login import current_user, login_required, login_user, logout_user
 from sqlalchemy import func
 
 from ..extensions import db, limiter
-from ..forms import CategoriaForm, ConteudoForm, LoginForm
-from ..models import Administrador, Avaliacao, Categoria, Conteudo, FonteOficial
+from ..forms import BloqueioForm, CategoriaForm, ConteudoForm, LoginForm
+from ..models import Administrador, Avaliacao, Categoria, Conteudo, FonteOficial, Usuario
+from ..models.usuario import ATIVO, BLOQUEADO, EXCLUIDO
 from ..utils import gerar_slug, url_segura
 
 bp = Blueprint("admin", __name__)
@@ -268,3 +269,115 @@ def avaliacoes():
         .all()
     )
     return render_template("admin/avaliacoes.html", linhas=linhas, comentarios=comentarios)
+
+
+# ---------- Contas dos cidadãos (mesmo padrão do FacilMed) ----------
+#
+# Três telas separadas, no mesmo visual:
+#   - Contas ativas     /admin/usuarios             -> Bloquear
+#   - Contas bloqueadas /admin/usuarios/bloqueadas  -> Desbloquear
+#   - Contas excluídas  /admin/usuarios/excluidas   -> só leitura
+# "Excluída" é quando o próprio cidadão apagou a conta (LGPD): os dados
+# pessoais já foram apagados e a conta não volta.
+
+SITUACOES = {
+    # situação: (status no banco, endpoint, título, subtítulo)
+    "ativas": (ATIVO, "admin.usuarios", "Contas ativas",
+               "Quem pode entrar na conta do guia. Bloqueie quem não deve mais acessar."),
+    "bloqueadas": (BLOQUEADO, "admin.contas_bloqueadas", "Contas bloqueadas",
+                   "Contas que não entram mais. O motivo é interno: a pessoa só vê que a "
+                   "conta está bloqueada."),
+    "excluidas": (EXCLUIDO, "admin.contas_excluidas", "Contas excluídas",
+                  "Contas que o próprio cidadão excluiu (LGPD). Os dados pessoais já foram "
+                  "apagados e a conta não volta."),
+}
+CONTAS_POR_PAGINA = 25
+
+
+def _listar_contas(situacao):
+    status, _, titulo, subtitulo = SITUACOES[situacao]
+    busca = request.args.get("busca", "").strip()[:100]
+
+    contagem = dict(
+        db.session.query(Usuario.status, func.count(Usuario.id)).group_by(Usuario.status).all()
+    )
+    consulta = Usuario.query.filter(Usuario.status == status)
+    if busca and situacao != "excluidas":  # conta excluída não tem mais e-mail
+        consulta = consulta.filter(Usuario.email.ilike(f"%{busca}%"))
+    ordem = {
+        "ativas": Usuario.criado_em.desc(),
+        "bloqueadas": Usuario.bloqueado_em.desc(),
+        "excluidas": Usuario.excluida_em.desc(),
+    }[situacao]
+    pagina = consulta.order_by(ordem, Usuario.id.desc()).paginate(
+        per_page=CONTAS_POR_PAGINA, error_out=False
+    )
+
+    return render_template(
+        "admin/usuarios.html",
+        situacao=situacao, situacoes=SITUACOES, titulo=titulo, subtitulo=subtitulo,
+        contagem={chave: contagem.get(s[0], 0) for chave, s in SITUACOES.items()},
+        pagina=pagina, busca=busca, form_bloqueio=BloqueioForm(),
+    )
+
+
+@bp.route("/usuarios")
+def usuarios():
+    return _listar_contas("ativas")
+
+
+@bp.route("/usuarios/bloqueadas")
+def contas_bloqueadas():
+    return _listar_contas("bloqueadas")
+
+
+@bp.route("/usuarios/excluidas")
+def contas_excluidas():
+    return _listar_contas("excluidas")
+
+
+@bp.route("/usuarios/<int:id>/bloquear", methods=["POST"])
+def usuario_bloquear(id):
+    """Bloqueio exige motivo: sem registro de quem bloqueou e por quê, ninguém sabe se pode desbloquear."""
+    usuario = db.get_or_404(Usuario, id)
+    if usuario.status != ATIVO:
+        flash("Só dá para bloquear uma conta ativa.", "erro")
+        return redirect(url_for("admin.usuarios"))
+    form = BloqueioForm()
+    if not form.validate_on_submit():
+        flash(form.motivo.errors[0] if form.motivo.errors else "Não foi possível bloquear.", "erro")
+        return redirect(url_for("admin.usuarios", busca=request.args.get("busca") or None))
+    usuario.bloquear(form.motivo.data, current_user)
+    db.session.commit()
+    # O log guarda o número da conta, não o e-mail do cidadão (RNF10).
+    _registrar("bloqueou a conta de cidadão %s", usuario.id)
+    flash(f"A conta {usuario.email} foi bloqueada e agora está em Contas bloqueadas.", "sucesso")
+    return redirect(url_for("admin.usuarios"))
+
+
+@bp.route("/usuarios/<int:id>/desbloquear", methods=["POST"])
+def usuario_desbloquear(id):
+    usuario = db.get_or_404(Usuario, id)
+    if usuario.status != BLOQUEADO:
+        flash("Essa conta não está bloqueada.", "erro")
+        return redirect(url_for("admin.contas_bloqueadas"))
+    usuario.desbloquear()
+    db.session.commit()
+    _registrar("desbloqueou a conta de cidadão %s", usuario.id)
+    flash(f"A conta {usuario.email} foi reativada e voltou para Contas ativas.", "sucesso")
+    return redirect(url_for("admin.contas_bloqueadas"))
+
+
+@bp.route("/usuarios/<int:id>/excluir-dados", methods=["POST"])
+def usuario_excluir_dados(id):
+    """Conta bloqueada não entra mais e não chega ao botão "Excluir minha conta".
+    Se a pessoa pedir a exclusão para a equipe (LGPD), o admin faz por aqui."""
+    usuario = db.get_or_404(Usuario, id)
+    if usuario.status != BLOQUEADO:
+        flash("Só contas bloqueadas são excluídas pelo admin. As ativas a própria pessoa exclui.", "erro")
+        return redirect(url_for("admin.contas_bloqueadas"))
+    usuario.excluir_conta()
+    db.session.commit()
+    _registrar("excluiu os dados da conta de cidadão %s a pedido do titular", usuario.id)
+    flash("Os dados pessoais da conta foram apagados. Ela agora está em Contas excluídas.", "sucesso")
+    return redirect(url_for("admin.contas_bloqueadas"))
