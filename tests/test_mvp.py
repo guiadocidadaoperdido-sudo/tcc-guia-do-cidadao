@@ -107,20 +107,27 @@ def test_login_bloqueia_depois_de_muitas_tentativas():
 
 # ---------- Migrações ----------
 
-def test_migracoes_criam_as_cinco_tabelas(tmp_path):
+def test_migracoes_criam_as_tabelas(tmp_path):
     from flask_migrate import downgrade, upgrade
     from sqlalchemy import inspect
 
     class ConfigArquivo(ConfigTeste):
         SQLALCHEMY_DATABASE_URI = f"sqlite:///{(tmp_path / 'mig.db').as_posix()}"
+        # Quando os testes rodam no PostgreSQL, a ConfigTeste traz o
+        # connect_timeout, que o SQLite não aceita. Aqui o banco é sempre SQLite.
+        SQLALCHEMY_ENGINE_OPTIONS = {}
 
     app = create_app(ConfigArquivo)
     with app.app_context():
         upgrade()
         tabelas = set(inspect(db.engine).get_table_names())
         assert {"administrador", "categoria", "conteudo", "fonte_oficial", "avaliacao"} <= tabelas
+        # Tabelas dos diferenciais (migração 0002)
+        assert {"usuario", "acompanhamento", "lembrete", "link_denunciado",
+                "termo_glossario"} <= tabelas
         downgrade(revision="base")
-        assert "conteudo" not in inspect(db.engine).get_table_names()
+        sobrou = set(inspect(db.engine).get_table_names())
+        assert "conteudo" not in sobrou and "usuario" not in sobrou
         db.engine.dispose()
 
 

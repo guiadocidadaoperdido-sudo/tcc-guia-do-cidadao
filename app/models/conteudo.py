@@ -41,6 +41,12 @@ class Conteudo(db.Model):
     avaliacoes = db.relationship(
         "Avaliacao", back_populates="conteudo", cascade="all, delete-orphan", passive_deletes=True
     )
+    # Quem salvou este tema. Se o conteúdo for excluído, o acompanhamento some junto.
+    acompanhamentos = db.relationship(
+        "Acompanhamento", back_populates="conteudo", cascade="all, delete-orphan"
+    )
+    # Lembretes ligados a este tema. Se o conteúdo for excluído, o lembrete fica sem tema.
+    lembretes = db.relationship("Lembrete", back_populates="conteudo")
 
     @property
     def total_util(self):

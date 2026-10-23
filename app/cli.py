@@ -4,7 +4,7 @@ import getpass
 import click
 
 from .extensions import db
-from .models import Administrador, Categoria, Conteudo, FonteOficial
+from .models import Administrador, Categoria, Conteudo, FonteOficial, TermoGlossario
 
 
 def registrar_comandos(app):
@@ -28,8 +28,8 @@ def registrar_comandos(app):
 
     @app.cli.command("dados-iniciais")
     def dados_iniciais():
-        """Cadastra as categorias e os conteúdos iniciais (só os que ainda não existem)."""
-        from .dados_iniciais import CATEGORIAS, CONTEUDOS
+        """Cadastra categorias, conteúdos e termos do glossário (só os que ainda não existem)."""
+        from .dados_iniciais import CATEGORIAS, CONTEUDOS, GLOSSARIO
 
         categorias = {}
         for dados in CATEGORIAS:
@@ -52,6 +52,12 @@ def registrar_comandos(app):
             conteudo.fontes = [FonteOficial(**f) for f in fontes]
             db.session.add(conteudo)
             click.echo(f"Conteúdo criado: {conteudo.titulo}")
+
+        for dados in GLOSSARIO:
+            if TermoGlossario.query.filter_by(termo=dados["termo"]).first():
+                continue
+            db.session.add(TermoGlossario(**dados))
+            click.echo(f"Termo do glossário criado: {dados['termo']}")
         db.session.commit()
 
     @app.cli.command("criar-admin")

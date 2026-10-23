@@ -47,6 +47,14 @@ def get_metadata():
     return target_db.metadata
 
 
+def include_object(objeto, nome, tipo, refletido, comparar_com):
+    """O índice da busca em português é criado à mão na migração 0001 e não
+    existe nos models. Sem isto, o autogenerate tentaria apagá-lo."""
+    if tipo == "index" and nome == "idx_conteudo_busca":
+        return False
+    return True
+
+
 def run_migrations_offline():
     """Run migrations in 'offline' mode.
 
@@ -89,6 +97,7 @@ def run_migrations_online():
     conf_args = current_app.extensions['migrate'].configure_args
     if conf_args.get("process_revision_directives") is None:
         conf_args["process_revision_directives"] = process_revision_directives
+    conf_args.setdefault("include_object", include_object)
 
     connectable = get_engine()
 

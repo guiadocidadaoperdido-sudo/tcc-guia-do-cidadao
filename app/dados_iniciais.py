@@ -516,3 +516,82 @@ CONTEUDOS += [
         ],
     },
 ]
+
+# Termos iniciais do glossário "O que é isso?". Eles aparecem sublinhados nos
+# textos do guia e podem ser editados pela área administrativa.
+GLOSSARIO = [
+    {
+        "termo": "Cadastro Único",
+        "explicacao": "Cadastro do Governo Federal com as informações das famílias de baixa "
+                      "renda. É a porta de entrada para programas como o Bolsa Família e o "
+                      "Minha Casa, Minha Vida. A inscrição é feita no CRAS ou no posto de "
+                      "atendimento da prefeitura.",
+    },
+    {
+        "termo": "NIS",
+        "explicacao": "Número de Identificação Social. É o número que a pessoa recebe quando "
+                      "entra no Cadastro Único e serve para consultar e receber os benefícios "
+                      "sociais.",
+    },
+    {
+        "termo": "CPF",
+        "explicacao": "Cadastro de Pessoas Físicas. É o número que identifica a pessoa na "
+                      "Receita Federal e é pedido em quase todos os serviços públicos.",
+    },
+    {
+        "termo": "conta gov.br",
+        "explicacao": "Login único do Governo Federal. Com ela, a pessoa acessa vários serviços "
+                      "pela internet usando o CPF e uma senha, sem precisar criar um cadastro "
+                      "em cada site.",
+    },
+    {
+        "termo": "CRAS",
+        "explicacao": "Centro de Referência de Assistência Social. É o local da prefeitura onde "
+                      "a família faz o Cadastro Único e recebe orientação sobre os programas "
+                      "sociais.",
+    },
+    {
+        "termo": "Poupatempo",
+        "explicacao": "Posto de atendimento do Governo do Estado de São Paulo que reúne vários "
+                      "serviços, como a emissão da Carteira de Identidade. Muitos serviços "
+                      "precisam de agendamento.",
+    },
+    {
+        "termo": "UBS",
+        "explicacao": "Unidade Básica de Saúde, o posto de saúde do bairro. É onde se faz o "
+                      "Cartão SUS, se toma vacina e se marca consulta pelo SUS.",
+    },
+    {
+        "termo": "Junta de Serviço Militar",
+        "explicacao": "Órgão que atende o alistamento militar na cidade, geralmente dentro da "
+                      "prefeitura. Quem perdeu o prazo do alistamento on-line deve procurar a "
+                      "Junta.",
+    },
+    {
+        "termo": "Detran",
+        "explicacao": "Departamento Estadual de Trânsito. Cuida da carteira de motorista (CNH), "
+                      "dos exames e das provas de direção no seu estado.",
+    },
+    {
+        "termo": "Inep",
+        "explicacao": "Instituto Nacional de Estudos e Pesquisas Educacionais Anísio Teixeira, "
+                      "ligado ao Ministério da Educação. É quem organiza o Enem.",
+    },
+    {
+        "termo": "Sisu",
+        "explicacao": "Sistema de Seleção Unificada. Usa a nota do Enem para disputar vagas em "
+                      "universidades públicas.",
+    },
+    {
+        "termo": "Prouni",
+        "explicacao": "Programa Universidade para Todos. Oferece bolsas em faculdades "
+                      "particulares para estudantes que fizeram o Enem e seguem as regras de "
+                      "renda do programa.",
+    },
+    {
+        "termo": "Pix",
+        "explicacao": "Forma de pagamento instantâneo do Banco Central. Atenção: órgãos do "
+                      "governo não pedem Pix para liberar benefícios. Pedido de Pix para "
+                      "\"taxa\" é sinal de golpe.",
+    },
+]
