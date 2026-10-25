@@ -1,12 +1,17 @@
 """Blueprint da parte pública: o visitante não precisa fazer login."""
 from flask import (
-    Blueprint, abort, current_app, flash, jsonify, redirect, render_template, request,
-    send_from_directory, session, url_for,
+    Blueprint, abort, current_app, flash, jsonify, make_response, redirect, render_template,
+    request, send_from_directory, session, url_for,
 )
 from sqlalchemy import text
 
 from ..extensions import db, limiter
-from ..models import Avaliacao, Categoria, Conteudo
+from ..forms import DenunciaForm, VerificadorForm
+from ..models import Avaliacao, Categoria, Conteudo, LinkDenunciado
+from ..models.link_denunciado import CONFIRMADO
+from ..utils import hoje
+from ..verificador import verificar
+from .conta import cidadao_atual, registrar_visita
 
 bp = Blueprint("publico", __name__)
 
@@ -52,10 +57,21 @@ def conteudo(slug):
     # RF04, RF05 e RF06. Conteúdo não publicado dá erro 404 (CT05).
     item = Conteudo.query.filter_by(slug=slug, publicado=True).first_or_404()
     ja_avaliou = item.id in session.get("avaliados", [])
-    return render_template(
+
+    # Meu acompanhamento: só existe para quem entrou na conta e salvou o tema.
+    usuario = cidadao_atual()
+    acompanhamento, visto_antes = registrar_visita(usuario, item)
+
+    resposta = make_response(render_template(
         "publico/conteudo.html", conteudo=item, ja_avaliou=ja_avaliou,
-        relacionados=_relacionados(item),
-    )
+        relacionados=_relacionados(item), acompanhamento=acompanhamento,
+        visto_antes=visto_antes, hoje=hoje(),
+    ))
+    if usuario:
+        # Com a pessoa logada a página mostra o andamento dela: não guarda no
+        # navegador nem no modo offline (computador compartilhado).
+        resposta.headers["Cache-Control"] = "no-store"
+    return resposta
 
 
 def _relacionados(item, limite=3):
@@ -98,6 +114,29 @@ def avaliar(slug):
         return jsonify(ok=True, mensagem=mensagem)
     flash(mensagem, "sucesso")
     return redirect(url_for("publico.conteudo", slug=slug) + "#avaliacao")
+
+
+@bp.route("/verificar-golpe", methods=["GET", "POST"])
+@limiter.limit(lambda: current_app.config["LIMITE_VERIFICADOR"], methods=["POST"])
+def verificar_golpe():
+    """Verificador de golpe, aberto a todos (sem conta).
+
+    Usa POST para o texto não aparecer no endereço nem no histórico. Nada do
+    que a pessoa cola é guardado no banco ou no log (RNF10).
+    """
+    form = VerificadorForm()
+    resultado = None
+    if form.validate_on_submit():
+        confirmados = db.session.query(LinkDenunciado.dominio).filter_by(
+            status=CONFIRMADO).distinct()
+        resultado = verificar(form.texto.data, denunciados=[d for (d,) in confirmados])
+    resposta = make_response(render_template(
+        "publico/verificar_golpe.html", form=form, resultado=resultado,
+        form_denuncia=DenunciaForm(formdata=None),
+    ))
+    # O resultado mostra o que a pessoa colou: não fica guardado no navegador.
+    resposta.headers["Cache-Control"] = "no-store"
+    return resposta
 
 
 @bp.route("/sobre")

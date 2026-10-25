@@ -8,7 +8,10 @@ from sqlalchemy import func
 
 from ..extensions import db, limiter
 from ..forms import BloqueioForm, CategoriaForm, ConteudoForm, LoginForm
-from ..models import Administrador, Avaliacao, Categoria, Conteudo, FonteOficial, Usuario
+from ..models import (
+    Administrador, Avaliacao, Categoria, Conteudo, FonteOficial, LinkDenunciado, Usuario,
+)
+from ..models.link_denunciado import CONFIRMADO, DESCARTADO, PENDENTE
 from ..models.usuario import ATIVO, BLOQUEADO, EXCLUIDO
 from ..utils import gerar_slug, url_segura
 
@@ -381,3 +384,76 @@ def usuario_excluir_dados(id):
     _registrar("excluiu os dados da conta de cidadão %s a pedido do titular", usuario.id)
     flash("Os dados pessoais da conta foram apagados. Ela agora está em Contas excluídas.", "sucesso")
     return redirect(url_for("admin.contas_bloqueadas"))
+
+
+# ---------- Denúncias de links suspeitos ----------
+# Mesmo padrão das contas: três abas (pendentes, confirmadas e descartadas).
+# Só os links confirmados entram no verificador de golpe.
+
+SITUACOES_DENUNCIA = {
+    # situação: (status no banco, endpoint, título, subtítulo)
+    "pendentes": (PENDENTE, "admin.denuncias", "Denúncias pendentes",
+                  "Links enviados pelos cidadãos esperando revisão. Não abra o link: "
+                  "confira o endereço pelo texto."),
+    "confirmadas": (CONFIRMADO, "admin.denuncias_confirmadas", "Golpes confirmados",
+                    "Estes domínios fazem o verificador mostrar \"Muito suspeito\" para todo mundo."),
+    "descartadas": (DESCARTADO, "admin.denuncias_descartadas", "Denúncias descartadas",
+                    "Links que não eram golpe (ou denúncias erradas)."),
+}
+
+
+def _listar_denuncias(situacao):
+    status, _, titulo, subtitulo = SITUACOES_DENUNCIA[situacao]
+    contagem = dict(
+        db.session.query(LinkDenunciado.status, func.count(LinkDenunciado.id))
+        .group_by(LinkDenunciado.status).all()
+    )
+    pagina = (
+        LinkDenunciado.query.filter_by(status=status)
+        .order_by(LinkDenunciado.criado_em.desc(), LinkDenunciado.id.desc())
+        .paginate(per_page=CONTAS_POR_PAGINA, error_out=False)
+    )
+    return render_template(
+        "admin/denuncias.html",
+        situacao=situacao, situacoes=SITUACOES_DENUNCIA, titulo=titulo, subtitulo=subtitulo,
+        contagem={chave: contagem.get(s[0], 0) for chave, s in SITUACOES_DENUNCIA.items()},
+        pagina=pagina,
+    )
+
+
+@bp.route("/denuncias")
+def denuncias():
+    return _listar_denuncias("pendentes")
+
+
+@bp.route("/denuncias/confirmadas")
+def denuncias_confirmadas():
+    return _listar_denuncias("confirmadas")
+
+
+@bp.route("/denuncias/descartadas")
+def denuncias_descartadas():
+    return _listar_denuncias("descartadas")
+
+
+ACOES_DENUNCIA = {
+    # ação: (novo status, mensagem)
+    "confirmar": (CONFIRMADO, "Golpe confirmado. O domínio {} agora aparece como muito suspeito no verificador."),
+    "descartar": (DESCARTADO, "Denúncia de {} descartada."),
+    "reabrir": (PENDENTE, "A denúncia de {} voltou para Pendentes."),
+}
+
+
+@bp.route("/denuncias/<int:id>/<acao>", methods=["POST"])
+def denuncia_revisar(id, acao):
+    if acao not in ACOES_DENUNCIA:
+        abort(404)
+    denuncia = db.get_or_404(LinkDenunciado, id)
+    status, mensagem = ACOES_DENUNCIA[acao]
+    # Volta para a aba onde a denúncia estava antes da mudança.
+    aba_de_origem = next(s[1] for s in SITUACOES_DENUNCIA.values() if s[0] == denuncia.status)
+    denuncia.revisar(status, current_user)
+    db.session.commit()
+    _registrar("marcou a denúncia %s (%s) como %s", denuncia.id, denuncia.dominio, status)
+    flash(mensagem.format(denuncia.dominio), "sucesso")
+    return redirect(url_for(aba_de_origem))

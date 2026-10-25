@@ -31,6 +31,8 @@ document.addEventListener("DOMContentLoaded", () => {
   ativarVoltarAoTopo();
   mostrarData();
   ativarChecklist();
+  ativarProgresso();
+  focarResultadoGolpe();
   ativarFerramentasConteudo();
   ativarAvaliacao();
   ativarConfirmacoes();
@@ -317,16 +319,16 @@ function avisar(texto) {
   avisar.espera = setTimeout(() => { toast.hidden = true; }, 3000);
 }
 
-// Checklist de documentos: o visitante marca o que já separou. A marcação
-// fica só neste navegador, ligada ao endereço do conteúdo.
+// Checklist de documentos: o visitante marca o que já separou. Sem conta, a
+// marcação fica só neste navegador, ligada ao endereço do conteúdo. Com conta
+// (data-conta), quem guarda é o servidor: veja ativarProgresso().
 function ativarChecklist() {
   const lista = document.querySelector("[data-checklist]");
   if (!lista) return;
+  const naConta = "conta" in lista.dataset;
   const chave = `checklist:${lista.dataset.checklist}`;
   const caixas = [...lista.querySelectorAll("input[type=checkbox]")];
   const contador = document.getElementById("checklist-contador");
-  let marcados = [];
-  try { marcados = JSON.parse(preferencias.ler(chave) || "[]"); } catch (erro) { marcados = []; }
 
   const atualizar = () => {
     const feitos = caixas.filter((c) => c.checked).length;
@@ -334,23 +336,92 @@ function ativarChecklist() {
     lista.classList.toggle("checklist--completo", feitos === caixas.length);
   };
   const salvar = () => {
-    const escolhidos = caixas.map((c, n) => (c.checked ? n : -1)).filter((n) => n >= 0);
-    preferencias.gravar(chave, JSON.stringify(escolhidos));
+    if (!naConta) {
+      const escolhidos = caixas.map((c, n) => (c.checked ? n : -1)).filter((n) => n >= 0);
+      preferencias.gravar(chave, JSON.stringify(escolhidos));
+    }
     atualizar();
   };
-  caixas.forEach((caixa, i) => {
-    caixa.checked = marcados.includes(i);
-    caixa.addEventListener("change", salvar);
-  });
+
+  if (!naConta) {
+    let marcados = [];
+    try { marcados = JSON.parse(preferencias.ler(chave) || "[]"); } catch (erro) { marcados = []; }
+    caixas.forEach((caixa, i) => { caixa.checked = marcados.includes(i); });
+  }
+  caixas.forEach((caixa) => caixa.addEventListener("change", salvar));
+
   const limpar = document.getElementById("checklist-limpar");
   if (limpar) {
     limpar.hidden = false;
     limpar.addEventListener("click", () => {
       caixas.forEach((c) => { c.checked = false; });
-      salvar();
+      // Um "change" só: atualiza o contador e, com conta, envia uma vez.
+      caixas[0]?.dispatchEvent(new Event("change"));
     });
   }
   atualizar();
+}
+
+// Meu acompanhamento (só com conta): cada caixinha de documento ou de passo
+// pertence ao formulário #form-progresso. A cada mudança, o andamento é
+// enviado sem recarregar a página. Marcar o passo 3 marca o 1 e o 2; desmarcar
+// o passo 2 desmarca os que vêm depois.
+function ativarProgresso() {
+  const form = document.querySelector("[data-progresso]");
+  if (!form || !window.fetch) return;
+  const caixas = [...document.querySelectorAll('input[form="form-progresso"]')];
+  const passos = caixas.filter((c) => c.name === "passos");
+  const contadorPassos = document.getElementById("passos-contador");
+  const falhou = "Não deu para salvar. Recarregue a página e tente de novo.";
+  // Tema ainda não salvo: depois do primeiro envio a página recarrega para
+  // mostrar a caixa "Tema salvo" igual ao servidor desenha.
+  const temaNovo = Boolean(document.querySelector(".acompanhamento__salvar"));
+  // Cada clique envia na hora, mas um de cada vez (em fila), para o último
+  // estado sempre chegar por último no servidor.
+  let fila = Promise.resolve();
+
+  const enviar = async () => {
+    try {
+      const resposta = await fetch(form.action, {
+        method: "POST",
+        body: new FormData(form),
+        headers: { "X-Requested-With": "fetch" },
+        keepalive: true, // termina de enviar mesmo se a pessoa sair da página
+      });
+      const json = await resposta.json().catch(() => ({}));
+      if (!resposta.ok || !json.ok) {
+        avisar(json.mensagem || falhou);
+        return;
+      }
+      if (temaNovo) {
+        window.location.reload();
+        return;
+      }
+      if (contadorPassos) contadorPassos.textContent = `${json.passo_atual} de ${passos.length}`;
+      avisar(json.mensagem);
+    } catch (erro) {
+      avisar(falhou);
+    }
+  };
+  const agendar = () => { fila = fila.then(enviar); };
+
+  passos.forEach((caixa, i) => {
+    caixa.addEventListener("change", () => {
+      passos.forEach((outra, j) => {
+        if (caixa.checked && j < i) outra.checked = true;
+        if (!caixa.checked && j > i) outra.checked = false;
+      });
+    });
+  });
+  caixas.forEach((caixa) => caixa.addEventListener("change", agendar));
+}
+
+// Verificador de golpe: depois de verificar, leva a tela (e o leitor de tela) até o resultado.
+function focarResultadoGolpe() {
+  const resultado = document.getElementById("resultado");
+  if (!resultado) return;
+  resultado.scrollIntoView({ block: "start" });
+  resultado.focus({ preventScroll: true });
 }
 
 // Barra do conteúdo: imprimir e compartilhar.

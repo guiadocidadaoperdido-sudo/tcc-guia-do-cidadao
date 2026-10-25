@@ -1,6 +1,11 @@
 """Funções auxiliares usadas nas rotas e nos templates."""
 import re
 import unicodedata
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
+# O servidor do Render fica em UTC; as datas do site seguem o horário de Brasília.
+FUSO_BRASIL = ZoneInfo("America/Sao_Paulo")
 
 MESES = [
     "janeiro", "fevereiro", "março", "abril", "maio", "junho",
@@ -13,6 +18,11 @@ def gerar_slug(texto):
     sem_acento = unicodedata.normalize("NFKD", texto).encode("ascii", "ignore").decode("ascii")
     slug = re.sub(r"[^a-z0-9]+", "-", sem_acento.lower()).strip("-")
     return slug[:150]
+
+
+def hoje():
+    """Data de hoje no Brasil. Às 22h em São Paulo o servidor (UTC) já está no dia seguinte."""
+    return datetime.now(FUSO_BRASIL).date()
 
 
 def formatar_data(data):

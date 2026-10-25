@@ -56,6 +56,8 @@ class Config:
     RATELIMIT_HEADERS_ENABLED = True
     LIMITE_LOGIN = "5 per minute;20 per hour"
     LIMITE_AVALIACAO = "30 per hour"
+    LIMITE_VERIFICADOR = "30 per hour"
+    LIMITE_DENUNCIA = "10 per hour"
 
     # Nível dos registros (logs) mostrados no terminal e no painel do Render.
     NIVEL_LOG = os.environ.get("NIVEL_LOG", "INFO")

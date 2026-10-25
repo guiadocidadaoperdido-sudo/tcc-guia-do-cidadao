@@ -52,3 +52,15 @@ def test_rnf06_formulario_sem_token_csrf_e_recusado():
         resposta = app.test_client().post("/admin/login", data={"email": "a@b.com", "senha": "x"})
         assert resposta.status_code == 400
         db.drop_all()
+
+
+def test_rotas_da_conta_exigem_token_csrf():
+    """Salvar tema, andamento e lembretes também são recusados sem o token CSRF."""
+    app = create_app(ConfigComCsrf)
+    with app.app_context():
+        db.create_all()
+        cliente = app.test_client()
+        for rota in ("/conta/temas/x/salvar", "/conta/temas/x/remover",
+                     "/conta/temas/x/progresso", "/conta/lembretes", "/conta/lembretes/1/excluir"):
+            assert cliente.post(rota).status_code == 400, rota
+        db.drop_all()

@@ -12,6 +12,8 @@ from config import ConfigTeste  # noqa: E402
 
 EMAIL_ADMIN = "admin@exemplo.com.br"
 SENHA_ADMIN = "senha-de-teste-123"
+EMAIL = "maria@exemplo.com.br"
+SENHA = "senha-da-maria"
 
 
 @pytest.fixture
@@ -69,4 +71,18 @@ def cliente(app):
 @pytest.fixture
 def admin_logado(cliente):
     cliente.post("/admin/login", data={"email": EMAIL_ADMIN, "senha": SENHA_ADMIN})
+    return cliente
+
+
+def _cadastrar(cliente, email=EMAIL, senha=SENHA, confirmar=None, consentimento="y"):
+    """Cria uma conta de cidadão (e já entra nela)."""
+    dados = {"email": email, "senha": senha, "confirmar_senha": confirmar or senha}
+    if consentimento:
+        dados["consentimento"] = consentimento
+    return cliente.post("/conta/cadastrar", data=dados)
+
+
+@pytest.fixture
+def cidadao_logado(cliente):
+    _cadastrar(cliente)
     return cliente

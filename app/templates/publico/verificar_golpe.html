@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% from "admin/_campo.html" import campo %}
+{% block titulo %}Verificar golpe | Guia do Cidadão Perdido{% endblock %}
+{% block descricao %}Recebeu um link ou mensagem estranha em nome do governo? Cole aqui e veja os sinais de golpe.{% endblock %}
+
+{% set titulos = {
+  "alto": "Muito suspeito",
+  "atencao": "Tenha cuidado",
+  "sem_sinais": "Não achamos sinais de golpe",
+} %}
+
+{% block conteudo %}
+<div class="pagina pagina-verificador">
+  <header class="pagina__cabecalho">
+    <h1 class="pagina__titulo">Verificar golpe</h1>
+    <p class="subtitulo">Recebeu um SMS, WhatsApp ou e-mail em nome do governo e ficou na dúvida? Cole o link ou a mensagem inteira aqui.</p>
+  </header>
+
+  <form method="post" class="verificador__form" novalidate>
+    {{ form.hidden_tag() }}
+    {{ campo(form.texto, linhas=6) }}
+    <button type="submit" class="botao botao--verde">Verificar</button>
+  </form>
+
+  {% if resultado %}
+  <section class="resultado-golpe resultado-golpe--{{ resultado.nivel }}" aria-labelledby="titulo-resultado" tabindex="-1" id="resultado">
+    <h2 id="titulo-resultado">{{ titulos[resultado.nivel] }}</h2>
+    {% if resultado.motivos %}
+    <p>O que encontramos:</p>
+    <ul>{% for motivo in resultado.motivos %}<li>{{ motivo }}</li>{% endfor %}</ul>
+    {% else %}
+    <p>Nenhum dos sinais mais comuns apareceu{% if resultado.links %} e o link é de um site oficial{% endif %}. Isso <strong>não garante</strong> que é seguro: na dúvida, entre direto no site ou app oficial, digitando o endereço você mesmo.</p>
+    {% endif %}
+
+    {% if resultado.nivel != "sem_sinais" %}
+    <h3>O que fazer</h3>
+    <ul>
+      <li>Não clique no link e não responda a mensagem.</li>
+      <li>Não pague nada e não passe senha, código ou dados do cartão.</li>
+      <li>Confira o assunto no site oficial (termina em <strong>.gov.br</strong>) ou no app do órgão.</li>
+      <li>Se já passou dados ou pagou, avise o seu banco e registre um boletim de ocorrência.</li>
+    </ul>
+    {% endif %}
+
+    {% set suspeitos = resultado.links | rejectattr("oficial") | list %}
+    {% if suspeitos %}
+    <h3>Links encontrados</h3>
+    <ul class="links-suspeitos">
+      {% for link in suspeitos %}
+      <li>
+        {# O link aparece só como texto, nunca clicável #}
+        <code>{{ link.url }}</code>
+        {% if cidadao %}
+        <form method="post" action="{{ url_for('conta.denunciar_link') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="url" value="{{ link.url }}">
+          <button type="submit" class="link-perigo" aria-label="Denunciar o link {{ link.dominio }}">Denunciar este link</button>
+        </form>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </section>
+  {% endif %}
+
+  <section class="denunciar" id="denunciar" aria-labelledby="titulo-denunciar">
+    <h2 id="titulo-denunciar">Denunciar um link suspeito</h2>
+    <p>Os links denunciados passam pela equipe do guia. Os confirmados como golpe fazem o verificador avisar todo mundo que colar aquele endereço.</p>
+    {% if cidadao %}
+    <form method="post" action="{{ url_for('conta.denunciar_link') }}" novalidate>
+      {{ form_denuncia.hidden_tag() }}
+      {{ campo(form_denuncia.url) }}
+      {{ campo(form_denuncia.descricao, linhas=2) }}
+      <button type="submit" class="botao botao--contorno">Enviar denúncia</button>
+    </form>
+    {% else %}
+    <p class="vazio"><a href="{{ url_for('conta.entrar') }}">Entre</a> ou <a href="{{ url_for('conta.cadastrar') }}">crie uma conta</a> para denunciar. A conta evita denúncias falsas em massa.</p>
+    {% endif %}
+  </section>
+
+  <p class="campo__dica">O verificador usa regras simples (endereço do site, pedido de Pix, senha, urgência…) e pode errar. Ele não substitui a confirmação no canal oficial.</p>
+</div>
+{% endblock %}

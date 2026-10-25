@@ -32,6 +32,14 @@ class Acompanhamento(db.Model):
     usuario = db.relationship("Usuario", back_populates="acompanhamentos")
     conteudo = db.relationship("Conteudo", back_populates="acompanhamentos")
 
+    def passos_feitos(self, total):
+        """Quantos passos já foram feitos (o admin pode ter tirado passos do texto)."""
+        return min(self.passo_atual, total)
+
+    def documentos_feitos(self, total):
+        """Quantos documentos estão marcados, sem contar números que não existem mais."""
+        return len([n for n in self.documentos_marcados if n <= total])
+
     @property
     def tem_novidade(self):
         """O conteúdo mudou depois da última visita da pessoa?"""

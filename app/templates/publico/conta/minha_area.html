@@ -18,11 +18,29 @@
   <section aria-labelledby="titulo-temas">
     <h2 id="titulo-temas">Temas salvos</h2>
     {% if usuario.acompanhamentos %}
-    <ul class="lista-conta">
+    <ul class="lista-conta lista-conta--temas">
       {% for item in usuario.acompanhamentos %}
+      {% set total_passos = item.conteudo.como_solicitar | linhas | length %}
+      {% set total_documentos = item.conteudo.documentos | linhas | length %}
       <li>
-        <a href="{{ url_for('publico.conteudo', slug=item.conteudo.slug) }}">{{ item.conteudo.titulo }}</a>
-        {% if item.tem_novidade %}<span class="etiqueta-novidade">Atualizado</span>{% endif %}
+        <div>
+          {% if item.conteudo.publicado %}
+          <a href="{{ url_for('publico.conteudo', slug=item.conteudo.slug) }}">{{ item.conteudo.titulo }}</a>
+          {% if item.tem_novidade %}<span class="etiqueta-novidade">Atualizado</span>{% endif %}
+          {% else %}
+          {{ item.conteudo.titulo }} <span class="etiqueta-novidade">Fora do ar no momento</span>
+          {% endif %}
+          <span class="lista-conta__progresso">
+            {% if total_passos %}Passos: {{ item.passos_feitos(total_passos) }} de {{ total_passos }}{% endif %}
+            {% if total_passos and total_documentos %} · {% endif %}
+            {% if total_documentos %}Documentos: {{ item.documentos_feitos(total_documentos) }} de {{ total_documentos }}{% endif %}
+          </span>
+        </div>
+        <form method="post" action="{{ url_for('conta.remover_tema', slug=item.conteudo.slug) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="origem" value="minha_area">
+          <button type="submit" class="link-perigo" aria-label="Remover {{ item.conteudo.titulo }} dos meus temas">Remover</button>
+        </form>
       </li>
       {% endfor %}
     </ul>
@@ -33,15 +51,52 @@
 
   <section aria-labelledby="titulo-lembretes">
     <h2 id="titulo-lembretes">Lembretes</h2>
+    <p>Crie um lembrete de prazo e coloque na sua agenda: Google Agenda, Outlook ou o Calendário do iPhone.</p>
     {% if usuario.lembretes %}
-    <ul class="lista-conta">
+    <ul class="lista-conta lista-lembretes">
       {% for lembrete in usuario.lembretes %}
-      <li><strong>{{ lembrete.data|data }}</strong>: {{ lembrete.titulo }}</li>
+      {% set passou = lembrete.data < hoje %}
+      <li id="lembrete-{{ lembrete.id }}" class="lembrete{% if passou %} lembrete--passou{% endif %}">
+        <div class="lembrete__info">
+          <strong><time datetime="{{ lembrete.data.isoformat() }}">{{ lembrete.data|data }}</time></strong>
+          {% if passou %}<span class="etiqueta-novidade">Já passou</span>{% endif %}
+          <span class="lembrete__titulo">{{ lembrete.titulo }}</span>
+          {% if lembrete.conteudo and lembrete.conteudo.publicado %}
+          <a class="lista-conta__progresso" href="{{ url_for('publico.conteudo', slug=lembrete.conteudo.slug) }}">Tema: {{ lembrete.conteudo.titulo }}</a>
+          {% endif %}
+        </div>
+        <div class="lembrete__acoes">
+          {% if not passou %}
+          <span class="lembrete__rotulo">Colocar na agenda:</span>
+          <a class="ferramenta" href="{{ agenda[lembrete.id].google }}" target="_blank" rel="noopener noreferrer">Google Agenda<span class="sr-only"> (abre em nova aba)</span></a>
+          <a class="ferramenta" href="{{ agenda[lembrete.id].outlook }}" target="_blank" rel="noopener noreferrer">Outlook<span class="sr-only"> (abre em nova aba)</span></a>
+          <a class="ferramenta" href="{{ agenda[lembrete.id].ics }}">iPhone / Apple (.ics)</a>
+          {% endif %}
+          <form method="post" action="{{ url_for('conta.excluir_lembrete', lembrete_id=lembrete.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="link-perigo" aria-label="Excluir o lembrete {{ lembrete.titulo }}">Excluir</button>
+          </form>
+        </div>
+      </li>
       {% endfor %}
     </ul>
+    <p class="campo__dica">O arquivo .ics também abre no app Calendário do Windows e já vem com aviso um dia antes.</p>
     {% else %}
     <p class="vazio">Nenhum lembrete por enquanto.</p>
     {% endif %}
+
+    <details class="bloco form-lembrete" id="novo-lembrete"{% if form_lembrete.errors %} open{% endif %}>
+      <summary>Criar lembrete</summary>
+      <div class="bloco__corpo">
+        <form method="post" action="{{ url_for('conta.criar_lembrete') }}" novalidate>
+          {{ form_lembrete.hidden_tag() }}
+          {{ campo(form_lembrete.titulo) }}
+          {{ campo(form_lembrete.prazo) }}
+          {{ campo(form_lembrete.conteudo_id) }}
+          <button type="submit" class="botao botao--verde">Criar lembrete</button>
+        </form>
+      </div>
+    </details>
   </section>
 
   <section id="excluir" class="zona-perigo" aria-labelledby="titulo-excluir">

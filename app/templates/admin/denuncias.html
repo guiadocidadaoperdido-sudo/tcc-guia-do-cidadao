@@ -1,0 +1,65 @@
+{#
+  Admin: Denúncias pendentes / Golpes confirmados / Denúncias descartadas.
+  Mesmo padrão da tela de usuários. O link aparece só como texto (nunca
+  clicável), para ninguém da equipe abrir um site de golpe sem querer.
+#}
+{% extends "admin/base_admin.html" %}
+{% block titulo_admin %}{{ titulo }}{% endblock %}
+
+{% set nomes_abas = {"pendentes": "Pendentes", "confirmadas": "Confirmadas", "descartadas": "Descartadas"} %}
+{% set botoes = {
+  "pendentes": [("confirmar", "Confirmar golpe", "botao botao--perigo"), ("descartar", "Descartar", "botao botao--contorno")],
+  "confirmadas": [("reabrir", "Voltar para pendentes", "link-botao")],
+  "descartadas": [("reabrir", "Voltar para pendentes", "link-botao")],
+} %}
+
+{% block conteudo_admin %}
+<div class="cabecalho-pagina">
+  <div>
+    <h1>{{ titulo }}</h1>
+    <p class="subtitulo">{{ subtitulo }}</p>
+  </div>
+</div>
+
+<nav class="abas" aria-label="Situação das denúncias">
+  {% for chave, s in situacoes.items() %}
+  <a href="{{ url_for(s[1]) }}" class="aba{% if chave == situacao %} aba--ativa{% endif %}" {% if chave == situacao %}aria-current="page"{% endif %}>
+    {{ nomes_abas[chave] }} <span class="aba__total">{{ contagem[chave] }}</span>
+  </a>
+  {% endfor %}
+</nav>
+
+{% if pagina.items %}
+<ul class="lista-contas">
+  {% for d in pagina.items %}
+  <li class="conta">
+    <div class="conta__linha">
+      <div class="conta__info">
+        <strong>{{ d.dominio }}</strong>
+        <code class="denuncia__url">{{ d.url }}</code>
+        <span>Enviada em {{ d.criado_em|data }}{% if not d.usuario %} · conta já excluída{% endif %}</span>
+        {% if d.descricao %}<span>Descrição: {{ d.descricao }}</span>{% endif %}
+        {% if d.revisado_em %}<span>Revisada em {{ d.revisado_em|data }}{% if d.administrador %} por {{ d.administrador.nome }}{% endif %}</span>{% endif %}
+      </div>
+      {% for acao, rotulo, classe in botoes[situacao] %}
+      <form method="post" action="{{ url_for('admin.denuncia_revisar', id=d.id, acao=acao) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="{{ classe }}" aria-label="{{ rotulo }}: {{ d.dominio }}">{{ rotulo }}</button>
+      </form>
+      {% endfor %}
+    </div>
+  </li>
+  {% endfor %}
+</ul>
+
+{% if pagina.pages > 1 %}
+<nav class="paginacao" aria-label="Páginas">
+  {% if pagina.has_prev %}<a href="{{ url_for(situacoes[situacao][1], page=pagina.prev_num) }}">← Anterior</a>{% endif %}
+  <span>Página {{ pagina.page }} de {{ pagina.pages }}</span>
+  {% if pagina.has_next %}<a href="{{ url_for(situacoes[situacao][1], page=pagina.next_num) }}">Próxima →</a>{% endif %}
+</nav>
+{% endif %}
+{% else %}
+<p class="vazio">Nenhuma denúncia {{ {"pendentes": "pendente", "confirmadas": "confirmada", "descartadas": "descartada"}[situacao] }}.</p>
+{% endif %}
+{% endblock %}

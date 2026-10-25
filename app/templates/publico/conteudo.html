@@ -4,6 +4,10 @@
 
 {% block conteudo %}
 {% set documentos = conteudo.documentos | linhas %}
+{% set passos = conteudo.como_solicitar | linhas %}
+{# Com a conta logada, as caixinhas pertencem ao formulário "form-progresso" (atributo form=) #}
+{% set marcados = acompanhamento.documentos_marcados if acompanhamento else [] %}
+{% set passo_atual = acompanhamento.passo_atual if acompanhamento else 0 %}
 <div class="pagina pagina-conteudo">
   <nav class="trilha" aria-label="Você está em">
     <ol>
@@ -30,6 +34,51 @@
             Compartilhar
           </button>
         </div>
+
+        {# Meu acompanhamento: login opcional; sem conta, só um convite #}
+        <div class="acompanhamento" id="acompanhamento">
+          {% if visto_antes %}
+          <p class="mensagem mensagem--aviso" role="status">Este tema foi atualizado em {{ conteudo.atualizado_em | data }}, depois da sua última visita ({{ visto_antes | data }}). Confira se algo mudou no seu processo.</p>
+          {% endif %}
+          {% if cidadao and acompanhamento %}
+          <p class="acompanhamento__texto">
+            <strong>Tema salvo na sua conta.</strong>
+            {% if passos %}Passos feitos: <span id="passos-contador">{{ acompanhamento.passos_feitos(passos | length) }} de {{ passos | length }}</span>.{% endif %}
+            <a href="{{ url_for('conta.minha_area') }}">Ver meus temas</a>
+          </p>
+          <form method="post" action="{{ url_for('conta.remover_tema', slug=conteudo.slug) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="link-botao">Remover dos meus temas</button>
+          </form>
+          {% elif cidadao %}
+          <form method="post" action="{{ url_for('conta.salvar_tema', slug=conteudo.slug) }}" class="acompanhamento__salvar">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="botao botao--contorno">Salvar este tema</button>
+            <span class="acompanhamento__texto">Marque os documentos e os passos para acompanhar o seu processo.</span>
+          </form>
+          {% else %}
+          <p class="acompanhamento__texto">Quer acompanhar este processo? <a href="{{ url_for('conta.entrar') }}">Entre</a> ou <a href="{{ url_for('conta.cadastrar') }}">crie uma conta</a> para salvar este tema e marcar os passos que já fez.</p>
+          {% endif %}
+          {% if cidadao %}
+          <details class="acompanhamento__lembrete">
+            <summary>Criar lembrete de prazo</summary>
+            <form method="post" action="{{ url_for('conta.criar_lembrete') }}" class="form-lembrete-curto">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="origem" value="conteudo">
+              <input type="hidden" name="conteudo_id" value="{{ conteudo.id }}">
+              <label class="campo__rotulo" for="lembrete-titulo">Do que você quer lembrar?</label>
+              <input type="text" id="lembrete-titulo" name="titulo" maxlength="150" required value="{{ conteudo.titulo }}">
+              <label class="campo__rotulo" for="lembrete-data">Data</label>
+              <input type="date" id="lembrete-data" name="prazo" required min="{{ hoje.isoformat() }}">
+              <button type="submit" class="botao botao--verde">Criar e escolher a agenda</button>
+            </form>
+          </details>
+          <form method="post" action="{{ url_for('conta.salvar_progresso', slug=conteudo.slug) }}" id="form-progresso" data-progresso>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <noscript><button type="submit" class="botao botao--contorno">Salvar andamento</button></noscript>
+          </form>
+          {% endif %}
+        </div>
       </header>
 
       {# RF04: o conteúdo dividido em partes que abrem e fecham #}
@@ -54,12 +103,20 @@
         <details class="bloco" id="documentos">
           <summary>Documentos necessários</summary>
           <div class="bloco__corpo">
+            {% if cidadao %}
+            <p class="checklist__dica">Marque o que você já separou. Fica salvo na sua conta.</p>
+            {% else %}
             <p class="checklist__dica">Marque o que você já separou. A marcação fica só neste aparelho.</p>
-            <ul class="checklist" data-checklist="{{ conteudo.slug }}">
+            {% endif %}
+            <ul class="checklist" data-checklist="{{ conteudo.slug }}"{% if cidadao %} data-conta{% endif %}>
               {% for item in documentos %}
               <li>
                 <label>
+                  {% if cidadao %}
+                  <input type="checkbox" name="documentos" value="{{ loop.index }}" form="form-progresso"{% if loop.index in marcados %} checked{% endif %}>
+                  {% else %}
                   <input type="checkbox" name="documento-{{ loop.index }}">
+                  {% endif %}
                   <span>{{ item }}</span>
                 </label>
               </li>
@@ -73,11 +130,25 @@
         </details>
         {% endif %}
 
-        {% if conteudo.como_solicitar %}
-        <details class="bloco" id="passo-a-passo">
+        {% if passos %}
+        <details class="bloco" id="passo-a-passo"{% if acompanhamento %} open{% endif %}>
           <summary>Como solicitar: passo a passo</summary>
           <div class="bloco__corpo">
-            <ol class="passos">{% for item in conteudo.como_solicitar | linhas %}<li>{{ item }}</li>{% endfor %}</ol>
+            {% if cidadao %}
+            <p class="checklist__dica">Marque os passos que você já fez. Marcar um passo marca os anteriores também.</p>
+            <ol class="passos passos--marcar" data-passos>
+              {% for item in passos %}
+              <li>
+                <label>
+                  <input type="checkbox" name="passos" value="{{ loop.index }}" form="form-progresso"{% if loop.index <= passo_atual %} checked{% endif %}>
+                  <span>{{ item }}</span>
+                </label>
+              </li>
+              {% endfor %}
+            </ol>
+            {% else %}
+            <ol class="passos">{% for item in passos %}<li>{{ item }}</li>{% endfor %}</ol>
+            {% endif %}
           </div>
         </details>
         {% endif %}
@@ -88,6 +159,7 @@
       <aside class="alerta-golpe" aria-labelledby="titulo-golpe">
         <h2 id="titulo-golpe">Atenção aos golpes</h2>
         {% for p in conteudo.alerta_golpes | paragrafos %}<p>{{ p }}</p>{% endfor %}
+        <p>Recebeu uma mensagem estranha sobre este assunto? <a href="{{ url_for('publico.verificar_golpe') }}">Use o verificador de golpe</a>.</p>
       </aside>
       {% endif %}
 
@@ -132,7 +204,7 @@
           <li><a href="#o-que-e">O que é</a></li>
           {% if conteudo.quem_tem_direito %}<li><a href="#quem-tem-direito">Quem tem direito</a></li>{% endif %}
           {% if documentos %}<li><a href="#documentos">Documentos ({{ documentos | length }})</a></li>{% endif %}
-          {% if conteudo.como_solicitar %}<li><a href="#passo-a-passo">Passo a passo</a></li>{% endif %}
+          {% if passos %}<li><a href="#passo-a-passo">Passo a passo</a></li>{% endif %}
           <li><a href="#fontes">Fontes oficiais</a></li>
           <li><a href="#avaliacao">Foi útil?</a></li>
         </ol>

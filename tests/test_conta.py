@@ -6,23 +6,7 @@ from app.extensions import db
 from app.models import Acompanhamento, Conteudo, Usuario
 from config import ConfigTeste
 
-from conftest import EMAIL_ADMIN, SENHA_ADMIN, _popular
-
-EMAIL = "maria@exemplo.com.br"
-SENHA = "senha-da-maria"
-
-
-def _cadastrar(cliente, email=EMAIL, senha=SENHA, confirmar=None, consentimento="y"):
-    dados = {"email": email, "senha": senha, "confirmar_senha": confirmar or senha}
-    if consentimento:
-        dados["consentimento"] = consentimento
-    return cliente.post("/conta/cadastrar", data=dados)
-
-
-@pytest.fixture
-def cidadao_logado(cliente):
-    _cadastrar(cliente)
-    return cliente
+from conftest import EMAIL, EMAIL_ADMIN, SENHA, SENHA_ADMIN, _cadastrar, _popular
 
 
 # ---------- Cadastro ----------

@@ -1271,6 +1271,90 @@ html.alto-contraste .service-card__icone { background: #111; color: var(--cor-am
 }
 .checklist--completo + .checklist__rodape #checklist-contador::after { content: " ✓ tudo pronto!"; }
 
+/* Meu acompanhamento (conta do cidadão) */
+.acompanhamento {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm) var(--space-md);
+  margin-top: var(--space-md);
+  padding: var(--space-md);
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--cor-verde);
+  border-radius: var(--raio);
+  background: var(--color-bg-alt);
+}
+.acompanhamento .mensagem { flex-basis: 100%; margin: 0; }
+.acompanhamento form { margin: 0; }
+.acompanhamento__texto { margin: 0; font-family: var(--font-ui); font-size: 0.92rem; }
+.acompanhamento__salvar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm) var(--space-md); }
+.passos--marcar label { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
+.passos--marcar input {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin-top: 3px;
+  accent-color: var(--cor-verde-texto);
+  cursor: pointer;
+}
+.passos--marcar input:checked + span { text-decoration: line-through; color: var(--color-text-muted); }
+.lista-conta__progresso { display: block; font-family: var(--font-ui); font-size: 0.85rem; color: var(--color-text-muted); }
+.lista-conta--temas li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-sm); }
+.lista-conta form { margin: 0; }
+
+/* Lembretes de prazo */
+.acompanhamento__lembrete { flex-basis: 100%; font-family: var(--font-ui); font-size: 0.92rem; }
+.acompanhamento__lembrete summary { cursor: pointer; color: var(--color-link); text-decoration: underline; }
+.form-lembrete-curto { display: grid; gap: 4px var(--space-md); margin-top: var(--space-sm); max-width: 420px; }
+.form-lembrete-curto input {
+  width: 100%;
+  padding: 8px 10px;
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-bottom: 2px solid var(--cor-azul);
+  border-radius: var(--raio);
+  font: inherit;
+  margin-bottom: var(--space-sm);
+}
+.form-lembrete-curto .botao { justify-self: start; }
+.lista-lembretes .lembrete { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-sm) var(--space-md); padding: var(--space-md) 0; }
+.lembrete__info { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px var(--space-sm); }
+.lembrete__titulo { flex-basis: 100%; }
+.lembrete__acoes { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm); }
+.lembrete__acoes form { margin: 0 0 0 var(--space-sm); }
+.lembrete__rotulo { font-family: var(--font-ui); font-size: 0.85rem; color: var(--color-text-muted); }
+.lembrete--passou .lembrete__info { color: var(--color-text-muted); }
+.form-lembrete { margin-top: var(--space-lg); max-width: 520px; }
+
+/* Verificador de golpe */
+.verificador__form { max-width: 720px; }
+.resultado-golpe {
+  max-width: 720px;
+  margin: var(--space-xl) 0;
+  padding: var(--space-lg);
+  border: 1px solid var(--color-border);
+  border-left: 6px solid var(--cor-verde);
+  border-radius: var(--raio);
+  background: #e6f4ec;
+  color: #121212;
+}
+.resultado-golpe--atencao { background: #fff8cc; border-left-color: #e6c900; }
+.resultado-golpe--alto { background: #fbeaea; border-left-color: var(--cor-vermelho); }
+.pagina .resultado-golpe h2 { margin-top: 0; }
+.resultado-golpe ul:not(.links-suspeitos) { list-style: disc; padding-left: 1.4rem; }
+.resultado-golpe ul:not(.links-suspeitos) li { margin-bottom: 4px; }
+.resultado-golpe:focus { outline: none; }
+.resultado-golpe--alto h2::before { content: "⚠ "; }
+.resultado-golpe h3 { font-size: 1rem; margin: var(--space-md) 0 var(--space-sm); }
+.links-suspeitos { list-style: none; padding: 0; }
+.links-suspeitos li { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm) var(--space-md); margin-bottom: var(--space-sm); }
+.links-suspeitos code { word-break: break-all; background: rgba(0, 0, 0, 0.06); padding: 2px 6px; border-radius: 4px; }
+.links-suspeitos form { margin: 0; }
+.denunciar { max-width: 720px; margin-top: var(--space-xl); }
+.denuncia__url { display: block; word-break: break-all; font-size: 0.85rem; }
+html.alto-contraste .resultado-golpe { background: #000; color: #fff; }
+
 .fontes__url { word-break: break-all; }
 .lista-conteudos--tres { grid-template-columns: 1fr; }
 
@@ -1366,7 +1450,7 @@ html.alto-contraste .aviso-toast { background: var(--cor-amarelo); color: #000; 
   body { background: #fff; color: #000; }
   .site-header, .search-modal, .back-to-top, .how-it-works, .busca, .avaliacao, .pular,
   .barra-acessibilidade, .ferramentas, .conteudo-lateral, .relacionados, .site-footer,
-  .aviso-toast, #checklist-limpar { display: none !important; }
+  .aviso-toast, #checklist-limpar, .acompanhamento { display: none !important; }
   .conteudo-layout { display: block; }
   .bloco summary::after { content: none; }
   .js .fade-in-up { opacity: 1; transform: none; }

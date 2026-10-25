@@ -35,3 +35,9 @@ class LinkDenunciado(db.Model):
 
     usuario = db.relationship("Usuario", back_populates="denuncias")
     administrador = db.relationship("Administrador")
+
+    def revisar(self, status, administrador):
+        """O admin confirma ou descarta (ou volta para pendente) e fica registrado quem foi."""
+        self.status = status
+        self.administrador = administrador if status != PENDENTE else None
+        self.revisado_em = datetime.now() if status != PENDENTE else None

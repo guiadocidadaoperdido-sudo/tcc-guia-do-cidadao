@@ -3,10 +3,10 @@
 //   atualiza em segundo plano.
 // - Páginas: busca na internet primeiro; sem internet, mostra a última versão
 //   guardada ou a página /offline.
-// A área administrativa, a conta do cidadão, a API e os formulários (POST)
-// nunca são guardados.
+// A área administrativa, a conta do cidadão, a API, os formulários (POST) e
+// as páginas marcadas com "no-store" nunca são guardadas.
 
-const VERSAO = "guia-v3";
+const VERSAO = "guia-v4";
 const ESSENCIAIS = [
   "/",
   "/offline",
@@ -55,7 +55,10 @@ self.addEventListener("fetch", (evento) => {
     evento.respondWith(
       fetch(pedido)
         .then((resposta) => {
-          if (resposta.ok) {
+          // Páginas com "no-store" (ex.: conteúdo com o andamento de quem está
+          // logado) não ficam guardadas no aparelho.
+          const semGuardar = (resposta.headers.get("Cache-Control") || "").includes("no-store");
+          if (resposta.ok && !semGuardar) {
             const copia = resposta.clone();
             caches.open(VERSAO).then((cache) => cache.put(pedido, copia));
           }
