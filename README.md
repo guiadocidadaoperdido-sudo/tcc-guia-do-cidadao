@@ -33,9 +33,19 @@ Os quatro últimos temas vieram dos assuntos mais pedidos na pesquisa de campo (
 - Glossário "O que é isso?": siglas e palavras difíceis (CPF, NIS, CRAS...) ficam sublinhadas nos textos; tocando, abre um balão com a explicação. Todos os termos ficam em `/glossario`.
 - Barra de acessibilidade: tamanho da letra e alto contraste; atalho "Ir para o conteúdo" (tecla de acesso 1).
 - Aplicativo instalável (PWA): pode ser adicionado à tela inicial do celular e abre as páginas já visitadas sem internet.
+- Verificador de golpe (`/verificar-golpe`): a pessoa cola um link ou uma mensagem e o guia mostra se é muito suspeito, se pede cuidado ou se não tem sinais de golpe, explicando o porquê. Funciona por regras, sem IA e sem guardar o texto.
+
+**Para o cidadão com conta (opcional)**
+- Cadastro só com e-mail e senha, com consentimento da LGPD; "Esqueci minha senha" por e-mail (link vale 1 hora).
+- Meu acompanhamento: salvar um tema, marcar os documentos e o passo do "Como solicitar" em que parou, e ver um aviso quando o conteúdo mudou desde a última visita.
+- Lembretes de prazo com data livre, com botões para Google Agenda, Outlook e arquivo .ics (iPhone e Calendário do Windows).
+- Denunciar link suspeito para a equipe revisar.
+- Minha área com tudo isso e o botão "Excluir minha conta".
 
 **Para a equipe (área administrativa)**
 - Login com limite de tentativas, cadastro de temas, conteúdos, fontes oficiais e termos do glossário, publicação/rascunho e relatório das avaliações.
+- Contas do cidadão em telas separadas (ativas, bloqueadas e excluídas), com bloqueio com motivo e exclusão a pedido do titular.
+- Denúncias de links (pendentes, confirmadas e descartadas). Um domínio confirmado passa a aparecer como "muito suspeito" no verificador.
 
 **Para outros sistemas**
 - API REST somente leitura em JSON (ver abaixo).
@@ -151,14 +161,16 @@ No GitHub, o workflow `.github/workflows/testes.yml` roda os testes no SQLite e 
 ```
 app/
   __init__.py      create_app: monta a aplicação e liga as extensões
-  controllers/     rotas do Flask: publico.py (parte pública), admin.py (área restrita) e api.py (API JSON)
-  models/          classes ligadas às cinco tabelas do banco
+  controllers/     rotas do Flask: publico.py (parte pública), conta.py (conta do cidadão), admin.py (área restrita) e api.py (API JSON)
+  models/          classes ligadas às tabelas do banco (as cinco do Apêndice B + usuario, acompanhamento, lembrete, link_denunciado e termo_glossario)
   templates/       páginas HTML em Jinja2 (publico/, admin/, erros/)
   static/          css/, js/ (main.js e sw.js do PWA), img/, fonts/ e manifest.webmanifest
-  forms.py         formulários da área administrativa (com proteção CSRF)
+  forms.py         formulários do site e da área administrativa (com proteção CSRF)
+  verificador.py   regras do verificador de golpe
+  agenda.py        links do Google e Outlook e arquivo .ics dos lembretes
   envio_email.py   envio do e-mail de nova senha (Brevo, Gmail ou só no log)
   glossario.py     filtro que sublinha os termos do glossário nos textos
-  cli.py           comandos criar-banco, dados-iniciais e criar-admin
+  cli.py           comandos criar-banco, dados-iniciais e criar-admin (e o admin pelas variáveis do Render)
   dados_iniciais.py  categorias e conteúdos iniciais
 migrations/        migrações do banco (Flask-Migrate/Alembic)
 .github/workflows/ testes automáticos no GitHub Actions
@@ -187,7 +199,8 @@ tests/             testes automatizados (pytest)
 | RNF05 | Consultas pelo SQLAlchemy, sempre parametrizadas |
 | RNF06 | Flask-WTF (token CSRF em todos os formulários) |
 | RNF07 | `COOKIE_SEGURO=1` no `.env` ativa cookies seguros e o cabeçalho HSTS quando publicado com HTTPS |
-| RNF10 | Nenhum dado pessoal do visitante é salvo; fontes e scripts só do próprio site |
+| RNF10 | Nenhum dado pessoal de quem só visita é salvo; quem cria conta guarda só e-mail, senha (hash), consentimento e o que ela mesma salvar, e pode excluir tudo (página Sobre) |
+| Diferenciais | `conta.py` (conta, senha, acompanhamento, lembretes, denúncia), `publico.verificar_golpe`, `publico.glossario`, `admin` (contas, denúncias, glossário) |
 
 ## Aviso
 O Guia do Cidadão Perdido é informativo. Não executa nem substitui os procedimentos dos órgãos públicos.
