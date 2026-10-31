@@ -1,10 +1,35 @@
 """Comandos de terminal do projeto (rodar com: flask --app run <comando>)."""
 import getpass
+import os
 
 import click
 
 from .extensions import db
 from .models import Administrador, Categoria, Conteudo, FonteOficial, TermoGlossario
+
+
+def criar_admin_pelo_ambiente():
+    """Cria o primeiro administrador a partir das variáveis ADMIN_EMAIL e ADMIN_SENHA.
+
+    Serve para o Render grátis, que não tem terminal para rodar o criar-admin.
+    Roda junto com o criar-banco (no build). Se as variáveis não existirem ou o
+    administrador já estiver cadastrado, não faz nada. Nunca para o deploy.
+    """
+    email = os.environ.get("ADMIN_EMAIL", "").strip().lower()
+    senha = os.environ.get("ADMIN_SENHA", "")
+    if not email or not senha:
+        return
+    if Administrador.query.filter_by(email=email).first():
+        click.echo(f"Administrador {email} já existe, mantido.")
+        return
+    if len(senha) < 8:
+        click.echo("ADMIN_SENHA precisa ter pelo menos 8 caracteres. Administrador não criado.")
+        return
+    admin = Administrador(nome=os.environ.get("ADMIN_NOME", "Administrador").strip(), email=email)
+    admin.definir_senha(senha)
+    db.session.add(admin)
+    db.session.commit()
+    click.echo(f"Administrador {email} criado pelas variáveis de ambiente.")
 
 
 def registrar_comandos(app):
@@ -25,6 +50,7 @@ def registrar_comandos(app):
             click.echo("Banco antigo reconhecido e marcado na migração 0001.")
         upgrade()
         click.echo(f"Banco atualizado em: {db.engine.url.render_as_string(hide_password=True)}")
+        criar_admin_pelo_ambiente()
 
     @app.cli.command("dados-iniciais")
     def dados_iniciais():

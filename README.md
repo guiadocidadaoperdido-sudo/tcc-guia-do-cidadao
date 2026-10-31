@@ -90,7 +90,8 @@ O site roda no Render e o banco PostgreSQL fica no Neon (plano grátis que não 
    Feche o terminal depois, para voltar a usar o banco local do `.env`.
 3. **GitHub:** envie esta pasta para um repositório no GitHub (o `.env` fica de fora).
 4. **Render:** em https://dashboard.render.com, clique em **New > Blueprint**, escolha o repositório e, quando pedir, cole o endereço do Neon em `DATABASE_URL`. O arquivo `render.yaml` já configura o resto (gunicorn, chave secreta, HTTPS).
-5. A cada `git push`, o Render publica a nova versão sozinho.
+5. **Administrador sem terminal:** o Render grátis não tem terminal para o `criar-admin`. Em vez disso, coloque no painel do Render (Environment) as variáveis `ADMIN_EMAIL` e `ADMIN_SENHA` (mínimo 8 caracteres) e, se quiser, `ADMIN_NOME`. No próximo deploy o `criar-banco` cria esse administrador. Se ele já existir, nada muda; depois de entrar no admin, a `ADMIN_SENHA` pode ser apagada do painel.
+6. A cada `git push`, o Render publica a nova versão sozinho.
 
 No plano grátis o site "dorme" depois de uns 15 minutos sem visitas; o primeiro acesso depois disso demora cerca de 1 minuto.
 

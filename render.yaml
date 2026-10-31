@@ -16,5 +16,9 @@ services:
         value: "1"
       - key: ATRAS_DE_PROXY
         value: "1"
+      - key: ADMIN_EMAIL
+        sync: false          # e-mail do primeiro administrador (criado no build pelo criar-banco)
+      - key: ADMIN_SENHA
+        sync: false          # senha do administrador; pode apagar depois que ele for criado
       - key: BREVO_API_KEY
         sync: false          # chave da API do Brevo (o Render grátis bloqueia SMTP)
