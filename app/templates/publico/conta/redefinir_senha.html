@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% from "admin/_campo.html" import campo %}
+{% block titulo %}Criar senha nova | Guia do Cidadão Perdido{% endblock %}
+
+{% block conteudo %}
+<div class="pagina">
+  <div class="caixa-login">
+    <h1>Criar senha nova</h1>
+    <p>Escolha uma senha nova para a sua conta.</p>
+    <form method="post" novalidate>
+      {{ form.hidden_tag() }}
+      {{ campo(form.senha) }}
+      {{ campo(form.confirmar_senha) }}
+      <button type="submit" class="botao botao--verde botao--largo">Salvar senha nova</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

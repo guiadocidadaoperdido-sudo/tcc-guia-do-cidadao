@@ -11,6 +11,7 @@
       {{ form.hidden_tag() }}
       {{ campo(form.email) }}
       {{ campo(form.senha) }}
+      <p class="campo__dica"><a href="{{ url_for('conta.esqueci_senha') }}">Esqueci minha senha</a></p>
       <button type="submit" class="botao botao--verde botao--largo">Entrar</button>
     </form>
     <p class="caixa-login__rodape">Ainda não tem conta? <a href="{{ url_for('conta.cadastrar') }}">Criar conta</a></p>

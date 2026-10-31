@@ -30,11 +30,12 @@ Os quatro últimos temas vieram dos assuntos mais pedidos na pesquisa de campo (
 - Cada conteúdo em partes: o que é, quem tem direito, documentos, passo a passo, alerta de golpes e fontes oficiais.
 - Checklist de documentos para marcar o que já separou (fica só no aparelho), imprimir e compartilhar.
 - "Veja também" com conteúdos do mesmo tema; "Este conteúdo foi útil?" com sugestão opcional.
+- Glossário "O que é isso?": siglas e palavras difíceis (CPF, NIS, CRAS...) ficam sublinhadas nos textos; tocando, abre um balão com a explicação. Todos os termos ficam em `/glossario`.
 - Barra de acessibilidade: tamanho da letra e alto contraste; atalho "Ir para o conteúdo" (tecla de acesso 1).
 - Aplicativo instalável (PWA): pode ser adicionado à tela inicial do celular e abre as páginas já visitadas sem internet.
 
 **Para a equipe (área administrativa)**
-- Login com limite de tentativas, cadastro de temas, conteúdos e fontes oficiais, publicação/rascunho e relatório das avaliações.
+- Login com limite de tentativas, cadastro de temas, conteúdos, fontes oficiais e termos do glossário, publicação/rascunho e relatório das avaliações.
 
 **Para outros sistemas**
 - API REST somente leitura em JSON (ver abaixo).
@@ -93,6 +94,21 @@ O site roda no Render e o banco PostgreSQL fica no Neon (plano grátis que não 
 
 No plano grátis o site "dorme" depois de uns 15 minutos sem visitas; o primeiro acesso depois disso demora cerca de 1 minuto.
 
+## E-mail de "esqueci minha senha"
+O cidadão pede um link em `/conta/esqueci-senha` e recebe um e-mail com um link que vale por 1 hora e só funciona uma vez. O remetente é `guiadocidadaoperdido@gmail.com`. O código fica em `app/envio_email.py` e escolhe o jeito de enviar pelo `.env`:
+
+| Onde | Como envia | O que configurar |
+|---|---|---|
+| Render | API do Brevo (HTTPS) | `BREVO_API_KEY` no painel do Render (Environment) |
+| PC | SMTP do Gmail | `MAIL_SENHA` com a senha de app do Gmail no `.env` |
+| PC sem configurar | Não envia: o link aparece no terminal | nada |
+
+O SMTP do Gmail não funciona no Render porque o plano grátis bloqueia as portas de e-mail (25, 465 e 587) desde setembro de 2025.
+
+**Brevo (uma vez só):** crie a conta grátis em https://www.brevo.com com o e-mail do projeto, confirme o remetente `guiadocidadaoperdido@gmail.com` em *Senders, Domains & Dedicated IPs* e gere a chave em *SMTP & API > API Keys*.
+
+**Gmail no PC:** na conta do projeto, ative a verificação em duas etapas e gere uma senha de app (Conta Google > Segurança > Senhas de app). Cole em `MAIL_SENHA`, sem espaços.
+
 ## Banco de dados e migrações
 As tabelas são criadas e alteradas por **migrações** (Flask-Migrate/Alembic), na pasta `migrations/`. A migração `0001` cria as cinco tabelas do Apêndice B e o índice da busca.
 
@@ -116,7 +132,7 @@ Entrega só conteúdos publicados, em JSON. Não exige login e não expõe rascu
 Exemplo: `curl https://SEU-SITE.onrender.com/api/v1/conteudos?q=cnh`
 
 ## Segurança e operação
-- Limite de tentativas: 5 logins por minuto (20 por hora) e 30 avaliações por hora por IP. O IP fica só na memória do servidor.
+- Limite de tentativas: 5 logins por minuto (20 por hora), 3 pedidos de nova senha por minuto (10 por hora) e 30 avaliações por hora por IP. O IP fica só na memória do servidor.
 - Registros (logs) das ações da área administrativa e dos erros, sem dados de visitantes. No Render, aparecem na aba Logs.
 - `GET /saude` responde `{"status": "ok", "banco": "ok"}` quando o site e o banco funcionam. O Render usa esse endereço para saber se o site está no ar.
 - Fontes servidas pelo próprio site e Content-Security-Policy sem serviços de terceiros: nenhum dado do visitante vai para outras empresas.
@@ -139,6 +155,8 @@ app/
   templates/       páginas HTML em Jinja2 (publico/, admin/, erros/)
   static/          css/, js/ (main.js e sw.js do PWA), img/, fonts/ e manifest.webmanifest
   forms.py         formulários da área administrativa (com proteção CSRF)
+  envio_email.py   envio do e-mail de nova senha (Brevo, Gmail ou só no log)
+  glossario.py     filtro que sublinha os termos do glossário nos textos
   cli.py           comandos criar-banco, dados-iniciais e criar-admin
   dados_iniciais.py  categorias e conteúdos iniciais
 migrations/        migrações do banco (Flask-Migrate/Alembic)

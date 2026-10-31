@@ -6,7 +6,7 @@
 // A área administrativa, a conta do cidadão, a API, os formulários (POST) e
 // as páginas marcadas com "no-store" nunca são guardadas.
 
-const VERSAO = "guia-v4";
+const VERSAO = "guia-v5";
 const ESSENCIAIS = [
   "/",
   "/offline",

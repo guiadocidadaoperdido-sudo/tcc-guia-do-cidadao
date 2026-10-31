@@ -7,9 +7,10 @@ from flask_login import current_user, login_required, login_user, logout_user
 from sqlalchemy import func
 
 from ..extensions import db, limiter
-from ..forms import BloqueioForm, CategoriaForm, ConteudoForm, LoginForm
+from ..forms import BloqueioForm, CategoriaForm, ConteudoForm, LoginForm, TermoGlossarioForm
 from ..models import (
-    Administrador, Avaliacao, Categoria, Conteudo, FonteOficial, LinkDenunciado, Usuario,
+    Administrador, Avaliacao, Categoria, Conteudo, FonteOficial, LinkDenunciado, TermoGlossario,
+    Usuario,
 )
 from ..models.link_denunciado import CONFIRMADO, DESCARTADO, PENDENTE
 from ..models.usuario import ATIVO, BLOQUEADO, EXCLUIDO
@@ -145,6 +146,49 @@ def categoria_excluir(id):
     _registrar("excluiu a categoria %s", categoria.slug)
     flash("Categoria excluída.", "sucesso")
     return redirect(url_for("admin.categorias"))
+
+
+# ---------- Glossário "O que é isso?" ----------
+
+@bp.route("/glossario")
+def glossario():
+    termos = sorted(TermoGlossario.query.all(), key=lambda t: gerar_slug(t.termo))
+    return render_template("admin/glossario.html", termos=termos)
+
+
+@bp.route("/glossario/novo", methods=["GET", "POST"])
+@bp.route("/glossario/<int:id>/editar", methods=["GET", "POST"])
+def termo_form(id=None):
+    termo = db.get_or_404(TermoGlossario, id) if id else TermoGlossario()
+    form = TermoGlossarioForm(obj=termo)
+    if form.validate_on_submit():
+        # "cpf" e "CPF" seriam o mesmo termo: confere sem diferenciar maiúsculas.
+        repetido = TermoGlossario.query.filter(
+            func.lower(TermoGlossario.termo) == form.termo.data.lower(),
+            TermoGlossario.id != (id or 0),
+        ).first()
+        if repetido:
+            form.termo.errors.append("Esse termo já está no glossário.")
+        else:
+            termo.termo = form.termo.data
+            termo.explicacao = form.explicacao.data
+            if not id:
+                db.session.add(termo)
+            db.session.commit()
+            _registrar("salvou o termo do glossário %s", termo.termo)
+            flash("Termo salvo. Ele já aparece sublinhado nos textos.", "sucesso")
+            return redirect(url_for("admin.glossario"))
+    return render_template("admin/termo_form.html", form=form, termo=termo)
+
+
+@bp.route("/glossario/<int:id>/excluir", methods=["POST"])
+def termo_excluir(id):
+    termo = db.get_or_404(TermoGlossario, id)
+    db.session.delete(termo)
+    db.session.commit()
+    _registrar("excluiu o termo do glossário %s", termo.termo)
+    flash("Termo excluído do glossário.", "sucesso")
+    return redirect(url_for("admin.glossario"))
 
 
 # ---------- Conteúdos e fontes oficiais (RF09 e RF11) ----------

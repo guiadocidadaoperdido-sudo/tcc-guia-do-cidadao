@@ -86,7 +86,7 @@
         <details class="bloco" id="o-que-e" open>
           <summary>O que é</summary>
           <div class="bloco__corpo">
-            {% for p in conteudo.o_que_e | paragrafos %}<p>{{ p }}</p>{% endfor %}
+            {% for p in conteudo.o_que_e | paragrafos %}<p>{{ p | glossario("o_que_e") }}</p>{% endfor %}
           </div>
         </details>
 
@@ -94,7 +94,7 @@
         <details class="bloco" id="quem-tem-direito">
           <summary>Quem tem direito</summary>
           <div class="bloco__corpo">
-            <ul>{% for item in conteudo.quem_tem_direito | linhas %}<li>{{ item }}</li>{% endfor %}</ul>
+            <ul>{% for item in conteudo.quem_tem_direito | linhas %}<li>{{ item | glossario("quem_tem_direito") }}</li>{% endfor %}</ul>
           </div>
         </details>
         {% endif %}
@@ -158,7 +158,7 @@
       {% if conteudo.alerta_golpes %}
       <aside class="alerta-golpe" aria-labelledby="titulo-golpe">
         <h2 id="titulo-golpe">Atenção aos golpes</h2>
-        {% for p in conteudo.alerta_golpes | paragrafos %}<p>{{ p }}</p>{% endfor %}
+        {% for p in conteudo.alerta_golpes | paragrafos %}<p>{{ p | glossario("alerta_golpes") }}</p>{% endfor %}
         <p>Recebeu uma mensagem estranha sobre este assunto? <a href="{{ url_for('publico.verificar_golpe') }}">Use o verificador de golpe</a>.</p>
       </aside>
       {% endif %}

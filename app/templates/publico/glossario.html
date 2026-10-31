@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block titulo %}Glossário: o que é isso? | Guia do Cidadão Perdido{% endblock %}
+{% block descricao %}Explicação simples das siglas e palavras difíceis dos serviços públicos.{% endblock %}
+
+{% block conteudo %}
+<div class="pagina">
+  <div class="section-header"><h1>O que é isso?</h1></div>
+  <p class="glossario__intro">As siglas e palavras difíceis que aparecem no guia, explicadas em linguagem simples. Nos textos dos temas, elas ficam sublinhadas: toque nelas para ver a explicação.</p>
+
+  {% if termos %}
+  <nav class="glossario__letras" aria-label="Termos do glossário">
+    {% for termo in termos %}<a href="#{{ termo.termo | slug }}">{{ termo.termo }}</a>{% endfor %}
+  </nav>
+  <dl class="glossario">
+    {% for termo in termos %}
+    <div class="glossario__item" id="{{ termo.termo | slug }}">
+      <dt>{{ termo.termo }}</dt>
+      <dd>{{ termo.explicacao }}</dd>
+    </div>
+    {% endfor %}
+  </dl>
+  {% else %}
+  <p>Ainda não há termos no glossário.</p>
+  {% endif %}
+</div>
+{% endblock %}

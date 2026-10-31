@@ -16,3 +16,5 @@ services:
         value: "1"
       - key: ATRAS_DE_PROXY
         value: "1"
+      - key: BREVO_API_KEY
+        sync: false          # chave da API do Brevo (o Render grátis bloqueia SMTP)

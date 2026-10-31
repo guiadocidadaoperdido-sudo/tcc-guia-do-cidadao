@@ -1,0 +1,35 @@
+{% extends "admin/base_admin.html" %}
+{% block titulo_admin %}Glossário{% endblock %}
+
+{% block conteudo_admin %}
+<div class="cabecalho-pagina">
+  <h1>Glossário "O que é isso?"</h1>
+  <a class="botao botao--verde" href="{{ url_for('admin.termo_form') }}">Novo termo</a>
+</div>
+<p>Os termos aparecem sublinhados nas partes "O que é", "Quem tem direito" e "Atenção aos golpes" de todos os conteúdos. Veja a <a href="{{ url_for('publico.glossario') }}" target="_blank" rel="noopener">página pública do glossário</a>.</p>
+
+{% if termos %}
+<div class="tabela-rolagem">
+<table class="tabela">
+  <thead><tr><th scope="col">Termo</th><th scope="col">Explicação</th><th scope="col">Ações</th></tr></thead>
+  <tbody>
+    {% for termo in termos %}
+    <tr>
+      <td>{{ termo.termo }}</td>
+      <td>{{ termo.explicacao | truncate(120) }}</td>
+      <td class="tabela__acoes">
+        <a href="{{ url_for('admin.termo_form', id=termo.id) }}">Editar</a>
+        <form method="post" action="{{ url_for('admin.termo_excluir', id=termo.id) }}" data-confirmar="Excluir o termo {{ termo.termo }} do glossário?">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="link-perigo">Excluir</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p>Nenhum termo cadastrado. Rode <code>flask --app run dados-iniciais</code> para criar os termos iniciais.</p>
+{% endif %}
+{% endblock %}

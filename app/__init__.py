@@ -7,7 +7,7 @@ from flask.logging import default_handler
 
 from config import Config
 from .extensions import csrf, db, limiter, login_manager, migrate
-from .utils import formatar_data, paragrafos, linhas
+from .utils import formatar_data, gerar_slug, paragrafos, linhas
 
 PASTA_MIGRACOES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "migrations")
 
@@ -47,6 +47,9 @@ def create_app(config_class=Config):
     app.add_template_filter(formatar_data, "data")
     app.add_template_filter(paragrafos, "paragrafos")
     app.add_template_filter(linhas, "linhas")
+    from .glossario import marcar_termos
+    app.add_template_filter(marcar_termos, "glossario")
+    app.add_template_filter(gerar_slug, "slug")
 
     _registrar_erros(app)
     _registrar_cabecalhos(app)

@@ -55,6 +55,28 @@ class CadastroForm(FlaskForm):
     )
 
 
+class EsqueciSenhaForm(FlaskForm):
+    email = EmailField(
+        "E-mail da sua conta", filters=[tirar_espacos],
+        validators=[DataRequired("Informe o e-mail."), Email("E-mail inválido."), Length(max=150)],
+    )
+
+
+class RedefinirSenhaForm(FlaskForm):
+    senha = PasswordField(
+        "Nova senha",
+        validators=[
+            DataRequired("Crie uma senha."),
+            Length(min=SENHA_MINIMA, max=128, message=f"A senha precisa ter pelo menos {SENHA_MINIMA} caracteres."),
+        ],
+        description=f"Pelo menos {SENHA_MINIMA} caracteres.",
+    )
+    confirmar_senha = PasswordField(
+        "Repita a nova senha",
+        validators=[DataRequired("Repita a senha."), EqualTo("senha", "As senhas não são iguais.")],
+    )
+
+
 class ExcluirContaForm(FlaskForm):
     senha = PasswordField(
         "Digite sua senha para confirmar",
@@ -117,6 +139,20 @@ class BloqueioForm(FlaskForm):
             Length(min=10, max=255, message="Descreva o motivo com 10 a 255 caracteres."),
         ],
         description="Fica registrado aqui. A pessoa só vê que a conta está bloqueada, sem o motivo.",
+    )
+
+
+class TermoGlossarioForm(FlaskForm):
+    termo = StringField(
+        "Termo", filters=[tirar_espacos],
+        validators=[DataRequired("Informe o termo."), Length(max=80)],
+        description="Escreva do jeito que aparece nos textos. Ex.: CPF, Cadastro Único.",
+    )
+    explicacao = TextAreaField(
+        "Explicação", filters=[tirar_espacos],
+        validators=[DataRequired("Escreva a explicação."),
+                    Length(max=400, message="Use no máximo 400 caracteres.")],
+        description="Até 400 caracteres, em linguagem simples. Aparece no balão e na página do glossário.",
     )
 
 

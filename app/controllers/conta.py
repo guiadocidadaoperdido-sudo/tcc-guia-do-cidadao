@@ -19,7 +19,11 @@ from sqlalchemy.exc import IntegrityError
 
 from ..extensions import db, limiter
 from ..agenda import gerar_ics, link_google, link_outlook
-from ..forms import CadastroForm, DenunciaForm, ExcluirContaForm, LembreteForm, LoginForm
+from ..envio_email import enviar_email
+from ..forms import (
+    CadastroForm, DenunciaForm, EsqueciSenhaForm, ExcluirContaForm, LembreteForm, LoginForm,
+    RedefinirSenhaForm,
+)
 from ..models import Acompanhamento, Conteudo, Lembrete, LinkDenunciado, Usuario
 from ..models.link_denunciado import CONFIRMADO, PENDENTE
 from ..utils import hoje, linhas, url_segura
@@ -136,6 +140,53 @@ def entrar():
         # Mesma mensagem para e-mail e senha errados, para não revelar qual falhou.
         flash("E-mail ou senha incorretos.", "erro")
     return render_template("publico/conta/entrar.html", form=form)
+
+
+# ---------- Esqueci minha senha ----------
+
+AVISO_LINK_ENVIADO = ("Se existir uma conta com esse e-mail, enviamos um link para criar uma "
+                      "senha nova. Ele vale por 1 hora. Olhe também a caixa de spam.")
+
+
+@bp.route("/esqueci-senha", methods=["GET", "POST"])
+@limiter.limit(lambda: current_app.config["LIMITE_ESQUECI_SENHA"], methods=["POST"])
+def esqueci_senha():
+    if cidadao_atual():
+        return redirect(url_for("conta.minha_area"))
+    form = EsqueciSenhaForm()
+    if form.validate_on_submit():
+        email = form.email.data.strip().lower()
+        usuario = Usuario.query.filter(func.lower(Usuario.email) == email).first()
+        # Conta bloqueada ou excluída não recebe link.
+        if usuario and usuario.esta_ativo:
+            link = url_for("conta.redefinir_senha", token=usuario.gerar_token_senha(),
+                           _external=True)
+            enviar_email(usuario.email, "Crie uma senha nova | Guia do Cidadão Perdido",
+                         render_template("emails/redefinir_senha.txt", link=link))
+            current_app.logger.info("Link de nova senha pedido (conta id %s).", usuario.id)
+        # A mesma resposta exista ou não a conta, para não revelar quem tem cadastro.
+        flash(AVISO_LINK_ENVIADO, "sucesso")
+        return redirect(url_for("conta.entrar"))
+    return render_template("publico/conta/esqueci_senha.html", form=form)
+
+
+@bp.route("/redefinir-senha/<token>", methods=["GET", "POST"])
+@limiter.limit(lambda: current_app.config["LIMITE_LOGIN"], methods=["POST"])
+def redefinir_senha(token):
+    usuario = Usuario.pelo_token_senha(token)
+    if usuario is None:
+        flash("Esse link não vale mais: ele passou de 1 hora ou já foi usado. "
+              "Peça um novo abaixo.", "erro")
+        return redirect(url_for("conta.esqueci_senha"))
+    form = RedefinirSenhaForm()
+    if form.validate_on_submit():
+        usuario.definir_senha(form.senha.data)   # muda o hash, então o link morre aqui
+        db.session.commit()
+        current_app.logger.info("Senha redefinida pelo link (conta id %s).", usuario.id)
+        _logar(usuario)
+        flash("Senha nova salva! Você já está na sua conta.", "sucesso")
+        return redirect(url_for("conta.minha_area"))
+    return render_template("publico/conta/redefinir_senha.html", form=form)
 
 
 @bp.route("/sair", methods=["POST"])

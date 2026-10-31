@@ -7,9 +7,9 @@ from sqlalchemy import text
 
 from ..extensions import db, limiter
 from ..forms import DenunciaForm, VerificadorForm
-from ..models import Avaliacao, Categoria, Conteudo, LinkDenunciado
+from ..models import Avaliacao, Categoria, Conteudo, LinkDenunciado, TermoGlossario
 from ..models.link_denunciado import CONFIRMADO
-from ..utils import hoje
+from ..utils import gerar_slug, hoje
 from ..verificador import verificar
 from .conta import cidadao_atual, registrar_visita
 
@@ -142,6 +142,13 @@ def verificar_golpe():
 @bp.route("/sobre")
 def sobre():
     return render_template("publico/sobre.html")
+
+
+@bp.route("/glossario")
+def glossario():
+    """Glossário "O que é isso?": todos os termos em ordem alfabética."""
+    termos = sorted(TermoGlossario.query.all(), key=lambda t: gerar_slug(t.termo))
+    return render_template("publico/glossario.html", termos=termos)
 
 
 @bp.route("/offline")

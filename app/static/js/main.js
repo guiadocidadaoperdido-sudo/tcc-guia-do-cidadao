@@ -34,6 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
   ativarProgresso();
   focarResultadoGolpe();
   ativarFerramentasConteudo();
+  ativarGlossario();
   ativarAvaliacao();
   ativarConfirmacoes();
   ativarFontes();
@@ -463,4 +464,58 @@ function ativarFerramentasConteudo() {
 function registrarServiceWorker() {
   if (!("serviceWorker" in navigator) || !window.isSecureContext) return;
   navigator.serviceWorker.register("/sw.js").catch(() => { /* segue sem modo offline */ });
+}
+
+// Glossário "O que é isso?": tocar num termo sublinhado abre um balão com a
+// explicação logo abaixo da frase. Sem JavaScript, o termo é um link para /glossario.
+function ativarGlossario() {
+  const termos = document.querySelectorAll("a.termo[data-explicacao]");
+  if (!termos.length) return;
+  let aberto = null; // { termo, balao }
+
+  const fechar = (devolverFoco) => {
+    if (!aberto) return;
+    aberto.termo.setAttribute("aria-expanded", "false");
+    aberto.balao.remove();
+    if (devolverFoco) aberto.termo.focus();
+    aberto = null;
+  };
+
+  termos.forEach((termo, i) => {
+    termo.setAttribute("role", "button");
+    termo.setAttribute("aria-expanded", "false");
+    termo.setAttribute("aria-controls", `balao-termo-${i}`);
+    termo.addEventListener("click", (evento) => {
+      evento.preventDefault();
+      const eraEste = aberto && aberto.termo === termo;
+      fechar(false);
+      if (eraEste) return;
+
+      const balao = document.createElement("span");
+      balao.className = "termo-balao";
+      balao.id = `balao-termo-${i}`;
+      balao.setAttribute("role", "note");
+      const titulo = document.createElement("strong");
+      titulo.textContent = termo.textContent;
+      const texto = document.createElement("span");
+      texto.textContent = " " + termo.dataset.explicacao + " ";
+      const link = document.createElement("a");
+      link.href = termo.getAttribute("href");
+      link.textContent = "Ver no glossário";
+      balao.append(titulo, texto, link);
+
+      termo.after(balao);
+      termo.setAttribute("aria-expanded", "true");
+      aberto = { termo, balao };
+    });
+  });
+
+  document.addEventListener("keydown", (evento) => {
+    if (evento.key === "Escape") fechar(true);
+  });
+  document.addEventListener("click", (evento) => {
+    if (aberto && !aberto.balao.contains(evento.target) && !evento.target.closest("a.termo")) {
+      fechar(false);
+    }
+  });
 }

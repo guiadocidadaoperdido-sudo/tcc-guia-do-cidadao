@@ -1,0 +1,12 @@
+Olá!
+
+Alguém (provavelmente você) pediu para criar uma senha nova na sua conta do Guia do Cidadão Perdido.
+
+Para criar a senha nova, abra este link:
+{{ link }}
+
+O link vale por 1 hora e só pode ser usado uma vez.
+
+Se não foi você que pediu, é só ignorar este e-mail. Sua senha continua a mesma.
+
+Guia do Cidadão Perdido

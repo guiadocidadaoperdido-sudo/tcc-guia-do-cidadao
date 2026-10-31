@@ -58,6 +58,20 @@ class Config:
     LIMITE_AVALIACAO = "30 per hour"
     LIMITE_VERIFICADOR = "30 per hour"
     LIMITE_DENUNCIA = "10 per hour"
+    LIMITE_ESQUECI_SENHA = "3 per minute;10 per hour"
+
+    # E-mail do projeto (recuperação de senha). Veja app/envio_email.py.
+    # No Render: BREVO_API_KEY. No PC: MAIL_SENHA (senha de app do Gmail).
+    # Sem nenhum dos dois, o link aparece só no terminal.
+    MAIL_REMETENTE = os.environ.get("MAIL_REMETENTE", "guiadocidadaoperdido@gmail.com")
+    MAIL_REMETENTE_NOME = "Guia do Cidadão Perdido"
+    BREVO_API_KEY = os.environ.get("BREVO_API_KEY")
+    MAIL_SERVIDOR = os.environ.get("MAIL_SERVIDOR", "smtp.gmail.com")
+    MAIL_PORTA = int(os.environ.get("MAIL_PORTA", "587"))
+    MAIL_USUARIO = os.environ.get("MAIL_USUARIO")
+    MAIL_SENHA = os.environ.get("MAIL_SENHA")
+    # Por quanto tempo o link de "esqueci minha senha" funciona (em segundos).
+    VALIDADE_LINK_SENHA = 3600
 
     # Nível dos registros (logs) mostrados no terminal e no painel do Render.
     NIVEL_LOG = os.environ.get("NIVEL_LOG", "INFO")
@@ -77,3 +91,6 @@ class ConfigTeste(Config):
     # Nos testes o limite fica desligado; o teste do limite liga de novo.
     RATELIMIT_ENABLED = False
     NIVEL_LOG = "WARNING"
+    # Os testes nunca mandam e-mail de verdade, mesmo com o .env preenchido.
+    BREVO_API_KEY = None
+    MAIL_SENHA = None

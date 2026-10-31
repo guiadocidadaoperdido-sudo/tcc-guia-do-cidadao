@@ -116,6 +116,7 @@
             <li><a href="{{ url_for('publico.inicio') }}#temas">Temas</a></li>
             <li><a href="{{ url_for('publico.busca') }}">Buscar</a></li>
             <li><a href="{{ url_for('publico.verificar_golpe') }}">Verificar golpe</a></li>
+            <li><a href="{{ url_for('publico.glossario') }}">Glossário</a></li>
             <li><a href="{{ url_for('publico.sobre') }}">Sobre e privacidade</a></li>
             <li><a href="{{ url_for('conta.minha_area') if cidadao else url_for('conta.entrar') }}">{{ "Minha área" if cidadao else "Entrar ou criar conta" }}</a></li>
             <li><a href="{{ url_for('api.conteudos') }}">Dados abertos (API)</a></li>

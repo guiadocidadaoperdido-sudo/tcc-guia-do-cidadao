@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from flask import current_app
+from itsdangerous import BadSignature, URLSafeTimedSerializer
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from ..extensions import db
@@ -69,6 +71,34 @@ class Usuario(db.Model):
 
     def conferir_senha(self, senha):
         return bool(self.senha_hash) and check_password_hash(self.senha_hash, senha)
+
+    # ---------- Link de "esqueci minha senha" ----------
+    # O link leva um token assinado com a SECRET_KEY (ninguém consegue inventar
+    # um). Dentro dele vai o id da conta e um pedaço do hash da senha atual:
+    # quando a senha muda, o pedaço muda e o link antigo para de funcionar.
+    # Por isso o link só serve uma vez e não precisa de tabela nova no banco.
+
+    @staticmethod
+    def _assinador():
+        return URLSafeTimedSerializer(current_app.config["SECRET_KEY"], salt="redefinir-senha")
+
+    def gerar_token_senha(self):
+        return Usuario._assinador().dumps({"id": self.id, "h": self.senha_hash[-16:]})
+
+    @staticmethod
+    def pelo_token_senha(token):
+        """Devolve a conta dona do token, ou None se o link for inválido, vencido ou já usado."""
+        try:
+            dados = Usuario._assinador().loads(
+                token, max_age=current_app.config["VALIDADE_LINK_SENHA"]
+            )
+        except BadSignature:  # inclui o SignatureExpired (link vencido)
+            return None
+        usuario = db.session.get(Usuario, dados.get("id"))
+        if (usuario is None or not usuario.esta_ativo or not usuario.senha_hash
+                or usuario.senha_hash[-16:] != dados.get("h")):
+            return None
+        return usuario
 
     @property
     def esta_ativo(self):
